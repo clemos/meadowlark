@@ -1,0 +1,4 @@
+-cp src
+-lib js-kit
+-js www/meadowlark.js
+-main Meadowlark
