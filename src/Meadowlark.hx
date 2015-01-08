@@ -11,14 +11,6 @@ import js.npm.ExpressHandlebars;
 class Meadowlark
 {
 	public static function main() {
-		var fortunes = [
-			"Conquer your fears or they will conquer you.",
-			"Rivers need springs.",
-			"Do not fear what you don't know.",
-			"You will have a pleasant surprise.",
-			"Whenever possible, keep it simple.",
-		];
-
 		var env = Node.process.env;
 		var app = new Express();
 
@@ -42,9 +34,8 @@ class Meadowlark
 		});
 
 		app.get('/about', function(req : Request, res : Response) {
-			var randomFortume = fortunes[Std.random(fortunes.length)];
 			res.render('about', {
-				fortune: randomFortume
+				fortune: FortuneCookies.getFortune()
 			});
 		});
 
