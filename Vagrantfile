@@ -28,9 +28,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Test webserver (to avoid port 80)
   config.vm.network "forwarded_port", guest: 3000, host: 3000
 
-  # Bootstrap docs
-  config.vm.network "forwarded_port", guest: 9001, host: 9001
-
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   # config.vm.network "private_network", ip: "192.168.33.10"
