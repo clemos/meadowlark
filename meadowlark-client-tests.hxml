@@ -1,0 +1,12 @@
+-cp tests
+-lib buddy
+-lib jQueryExtern
+-js www/public/qa/tests-global.js
+-main Global
+
+--next
+-cp tests
+-lib buddy
+-lib jQueryExtern
+-js www/public/qa/tests-about.js
+-main About

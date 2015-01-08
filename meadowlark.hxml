@@ -1,4 +1,7 @@
+-cp js-kit
 -cp src
 -lib js-kit
 -js www/meadowlark.js
 -main Meadowlark
+
+-cmd haxe meadowlark-client-tests.hxml

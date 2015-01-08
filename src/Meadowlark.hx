@@ -5,7 +5,6 @@ import js.node.Process;
 import js.npm.Express;
 import js.npm.express.Request;
 import js.npm.express.Response;
-import js.npm.express.*;
 import js.npm.ExpressHandlebars;
 
 class Meadowlark
@@ -27,6 +26,13 @@ class Meadowlark
 
 		app.use(new js.npm.express.Static(Node.__dirname + '/public'));
 
+		///// Tests /////
+
+		app.use(function(req : Request, res : Response, next) {
+			res.locals.showTests = app.get('env') != 'production' && req.query.test == '1';
+			next();
+		});
+
 		///// Routes /////
 
 		app.get('/', function(req : Request, res : Response) {
@@ -35,7 +41,8 @@ class Meadowlark
 
 		app.get('/about', function(req : Request, res : Response) {
 			res.render('about', {
-				fortune: FortuneCookies.getFortune()
+				fortune: FortuneCookies.getFortune(),
+				pageTestScript: '/qa/tests-about.js'
 			});
 		});
 
