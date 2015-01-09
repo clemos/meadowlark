@@ -47,11 +47,11 @@ class CrossPage extends BuddySuite
 					});
 				});
 
-				describe("Visiting the Request Group Rate page directly", {
+				describe("Directly from the Request Group Rate page", {
 					it("should result in an empty referrer field", function(done) {
 						browser.visit("http://localhost:3000/tours/request-group-rate", function() {
-								inputField = cast browser.field('referrer');
-								inputField.value.should.be('');
+							inputField = cast browser.field('referrer');
+							inputField.value.should.be('');
 							done();
 						});
 					});

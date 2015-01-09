@@ -1,5 +1,6 @@
 package;
 
+import haxecontracts.ContractException;
 import js.Node;
 import js.node.Process;
 import js.npm.Express;
@@ -66,7 +67,11 @@ class Meadowlark
 		});
 
 		app.use(function(err, req : js.npm.express.Request, res : js.npm.express.Response, next) {
-			Node.console.error(err.stack);
+			if(Std.is(err, ContractException)) 
+				logContractException(cast err);
+			else 
+				Node.console.error(err.stack);
+
 			res.status(500);
 			res.render('500');
 		});
@@ -76,5 +81,15 @@ class Meadowlark
 		app.listen(app.get("port"), function() {
 			Node.console.log('Express started on http://localhost:' + app.get("port") + '; Ctrl+C to terminate.');
 		});
+	}
+
+	private static function logContractException(e : ContractException) {
+		Node.console.error("ContractException:");
+		Node.console.error(e.message);
+		Node.console.error(e.object);
+		for (s in e.callStack) switch s {
+			case FilePos(s, file, line): Node.console.error('$file:$line');
+			case _:
+		}
 	}
 }

@@ -1,6 +1,8 @@
 package;
 
-class FortuneCookies
+import haxecontracts.*;
+
+class FortuneCookies implements HaxeContracts
 {
 	static var cookies = [
 		"Conquer your fears or they will conquer you.",
@@ -11,6 +13,7 @@ class FortuneCookies
 	];
 
 	public static function getFortune() {
+		Contract.ensures(Std.is(Contract.result, String), "Fortune cookie wasn't a String");
 		return cookies[Std.random(cookies.length)];
 	}
 }

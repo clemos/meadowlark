@@ -1,6 +1,7 @@
 -cp js-kit
 -cp src
 -lib js-kit
+-lib HaxeContracts
 -js www/meadowlark.js
 -main Meadowlark
 
