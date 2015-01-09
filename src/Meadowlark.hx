@@ -9,6 +9,8 @@ import js.npm.connect.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Static;
+import js.npm.Formidable;
+import js.npm.formidable.IncomingForm;
 
 class Meadowlark
 {
@@ -87,6 +89,30 @@ class Meadowlark
 				// if there were an error, we would redirect to an error page
 				res.redirect(303, '/thank-you');
 			}
+		});
+
+		///// Vacation Photos /////
+
+		app.get('/contest/vacation-photo', function(req : Request, res : Response) {
+			var now = Date.now();
+			res.render('contest/vacation-photo', {
+				year: now.getFullYear(), month: now.getMonth()
+			});
+		});		
+
+		app.post('/contest/vacation-photo/:year/:month', function(req : Request, res : Response) {
+			var form = Formidable.IncomingForm();
+
+			form.parse(req, function(err, fields, file : js.npm.formidable.File) {
+				if(err) return res.redirect(303, '/error');
+
+				Node.console.log('received fields:');
+				Node.console.log(fields);
+				Node.console.log('received files:');
+				Node.console.log(file);
+
+				res.redirect(303, '/thank-you');
+			});
 		});
 
 		///// Tours /////
