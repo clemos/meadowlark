@@ -41,6 +41,7 @@ haxelib install HaxeContracts
 
 echo "=== Installing Node packages..."
 npm install --no-bin-links
+npm install -g nodemon
 
 echo "=== Installation complete"
 
