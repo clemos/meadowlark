@@ -2,7 +2,9 @@ Following along the tutorial project in [Web Development with Node and Express](
 
 ## Installation
 
-If you're using [Vagrant](http://vagrantup.com), run `vagrant up` and you're set. If not, make sure that Haxe, Node.js and MongoDB is installed, then run `npm install`.
+If you're using [Vagrant](http://vagrantup.com), run `vagrant up` and you're set. If not, make sure that Haxe, Node.js, Git and MongoDB is installed ([provision.sh](https://github.com/ciscoheat/meadowlark/blob/master/provision.sh) can be useful), then run `npm install`.
+
+You'll also need [js-kit](https://github.com/clemos/haxe-js-kit), a very nice Node.js library for Haxe. Install with `haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master`.
 
 ## Compiling
 

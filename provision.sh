@@ -11,10 +11,14 @@ EOL
 echo "=== Updating apt..."
 apt-get update >/dev/null 2>&1
 
+echo "=== Installing Git..."
+sudo apt-get install -y git
+
 echo "=== Installing Haxe..."
 wget -q http://www.openfl.org/builds/haxe/haxe-3.1.3-linux-installer.tar.gz -O - | tar -xz
 sh install-haxe.sh -y >/dev/null 2>&1
 rm -f install-haxe.sh
+echo | haxelib setup
 
 echo "=== Installing MongoDB..."
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
@@ -28,6 +32,9 @@ add-apt-repository ppa:chris-lea/node.js -y
 apt-get update
 apt-get install nodejs -y
 # npm config set spin=false
+
+echo "=== Installing Haxe libraries..."
+haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master
 
 echo "=== Installing Node packages..."
 npm install --no-bin-links
