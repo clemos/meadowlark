@@ -37,6 +37,7 @@ echo "=== Installing Haxe libraries..."
 haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master
 haxelib install jQueryExtern
 haxelib install buddy
+haxelib install HaxeContracts
 
 echo "=== Installing Node packages..."
 npm install --no-bin-links
