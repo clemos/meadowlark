@@ -46,6 +46,20 @@ class Meadowlark
 			});
 		});
 
+		app.get('/tours/hood-river', function(req : Request, res : Response) {
+			res.render('tours/hood-river');
+		});
+
+		app.get('/tours/oregon-coast', function(req : Request, res : Response) {
+			res.render('tours/oregon-coast');
+		});
+
+		app.get('/tours/request-group-rate', function(req : Request, res : Response) {
+			res.render('tours/request-group-rate');
+		});
+
+		///// Error handling /////
+
 		app.use(function(req : Request, res : Response) {
 			res.status(404);
 			res.render('404');

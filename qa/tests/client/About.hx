@@ -1,4 +1,4 @@
-package ;
+package tests.client;
 
 import buddy.*;
 import jQuery.*;

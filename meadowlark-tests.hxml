@@ -1,0 +1,8 @@
+-cp qa
+-cp js-kit
+-lib js-kit
+-lib buddy
+# Required for buddy
+-D nodejs 
+-js www/qa/tests-crosspage.js
+-main tests.CrossPage

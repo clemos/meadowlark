@@ -1,12 +1,12 @@
--cp tests
+-cp qa
 -lib buddy
 -lib jQueryExtern
 -js www/public/qa/tests-global.js
--main Global
+-main tests.client.Global
 
 --next
--cp tests
+-cp qa
 -lib buddy
 -lib jQueryExtern
 -js www/public/qa/tests-about.js
--main About
+-main tests.client.About
