@@ -1,4 +1,6 @@
-Following along the tutorial project in [Web Development with Node and Express](http://shop.oreilly.com/product/0636920032977.do), but using Haxe as language instead of javascript. A work in progress that will evolve using Haxe solutions instead of Node packages. For example, it's using [Buddy](https://github.com/ciscoheat/buddy) for testing instead of mocha and chai.
+Following along the project in [Web Development with Node and Express](http://shop.oreilly.com/product/0636920032977.do), but using Haxe as language instead of javascript. A work in progress that will evolve using Haxe solutions instead of Node packages. For example, it's using [Buddy](https://github.com/ciscoheat/buddy) for testing instead of mocha and chai.
+
+**Current progress:** Beginning of Chapter 6.
 
 ## Installation
 
@@ -8,6 +10,10 @@ If not, make sure that Haxe, Node.js, Git and MongoDB is installed ([provision.s
 
 There are a few haxelib dependencies that will reveal themselves when you compile. But a special one is [js-kit](https://github.com/clemos/haxe-js-kit), a very nice Node.js library for Haxe available only from github. Install with `haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master`.
 
-## Compiling
+## Compiling and Running
 
 Compile with `haxe meadowlark.hxml`, then run with `node meadowlark.js` in the `www` directory. Browse to `http://localhost:3000` and it *should* work.
+
+## Tests
+
+The in-browser tests can be run by appending `?test=1` to any page url, for example `http://localhost:3000/about?test=1`. The cross-page tests are executed with the headless browser [Zombie.js](http://zombie.labnotes.org/) and is run from command-line: `node www/qa/tests-crosspage.js` (of course the server has to be running as well.)
