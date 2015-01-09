@@ -36,6 +36,7 @@ apt-get install nodejs -y
 echo "=== Installing Haxe libraries..."
 haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master
 haxelib install jQueryExtern
+haxelib install buddy
 
 echo "=== Installing Node packages..."
 npm install --no-bin-links
