@@ -4,9 +4,11 @@ import haxecontracts.ContractException;
 import js.Node;
 import js.node.Process;
 import js.npm.Express;
+import js.npm.ExpressHandlebars;
+import js.npm.connect.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
-import js.npm.ExpressHandlebars;
+import js.npm.express.Static;
 
 class Meadowlark
 {
@@ -33,7 +35,8 @@ class Meadowlark
 
 		///// Static /////
 
-		app.use(new js.npm.express.Static(Node.__dirname + '/public'));
+		app.use(new Static(Node.__dirname + '/public'));
+		app.use(BodyParser.urlencoded({extended: true}));
 
 		///// Tests /////
 
@@ -50,7 +53,7 @@ class Meadowlark
 			next();
 		});
 
-		///// Routes /////
+		///// Basic routes /////
 
 		app.get('/', function(req : Request, res : Response) {
 			res.render('home');
@@ -62,6 +65,31 @@ class Meadowlark
 				pageTestScript: '/qa/tests-about.js'
 			});
 		});
+
+		///// Newsletter /////
+
+		app.get('/newsletter', function(req : Request, res : Response) {
+			// we will learn about CSRF later...for now, we just
+			// provide a dummy value
+			res.render('newsletter', { csrf: 'CSRF token goes here' });
+		});
+
+		app.post('/process', function(req : Request, res : Response) {
+			Node.console.log('Form (from querystring): ' + req.query.form);
+			Node.console.log('CSRF token (from hidden form field): ' + untyped req.body._csrf);
+			Node.console.log('Name (from visible form field): ' + untyped req.body.name);
+			Node.console.log('Email (from visible form field): ' + untyped req.body.email);
+
+			if(req.xhr || req.accepts('json,html') == 'json'){
+				// if there were an error, we would send { error: 'error description' }
+				res.send({ success: true });
+			} else {
+				// if there were an error, we would redirect to an error page
+				res.redirect(303, '/thank-you');
+			}
+		});
+
+		///// Tours /////
 
 		app.get('/tours/hood-river', function(req : Request, res : Response) {
 			res.render('tours/hood-river');
