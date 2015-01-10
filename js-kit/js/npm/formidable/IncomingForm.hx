@@ -17,8 +17,7 @@ extern class IncomingForm
 
 	public var onPart : File -> Void;
 
-	@:overload(function(req : ClientRequest, cb : Dynamic -> Dynamic -> Array<File> -> Void) : Void {})
-	public function parse(req : ClientRequest, cb : Dynamic -> Dynamic -> File -> Void) : Void;
+	public function parse(req : ClientRequest, cb : Dynamic -> Dynamic -> Dynamic<File> -> Void) : Void;
 
 	public function on(event : String, cb : Dynamic) : Void;
 }

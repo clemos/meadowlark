@@ -249,8 +249,10 @@ class Meadowlark
 			var form = Formidable.IncomingForm();
 			var vacationPhotoDir = Node.__dirname + '/data/vacation-photo';
 
-			form.parse(req, function(err, fields, photo : js.npm.formidable.File) {
+			form.parse(req, function(err, fields, photos) {
 				var session = Session.session(req);
+				var photo = photos.photo;
+
 				if(err) {
 					session.flash = {
 						type: 'danger',
@@ -261,11 +263,18 @@ class Meadowlark
 					return res.redirect(303, '/contest/vacation-photo');
 				}
 
-				var dir = vacationPhotoDir + '/' + Date.now();
+				var dir = vacationPhotoDir + '/' + Date.now().getTime();
 				var path = dir + '/' + photo.name;
 				
 				Fs.mkdirSync(dir);
-				Fs.renameSync(photo.path, dir + '/' + photo.name);
+
+				// /tmp uses a different partition and filesystem.
+				// need to copy and unlink: http://stackoverflow.com/a/4571377/70894
+				var is = Fs.createReadStream(photo.path);
+				var os = Fs.createWriteStream(path);
+
+				is.pipe(os);
+				is.on('end', Fs.unlinkSync.bind(photo.path));
 
 				saveContestEntry('vacation-photo', fields.email, req.params.year, req.params.month, path);
 
