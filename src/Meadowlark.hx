@@ -3,6 +3,7 @@ package;
 import haxecontracts.ContractException;
 import js.Node;
 import js.node.Process;
+import js.node.stdio.Console;
 import js.npm.Express;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
@@ -18,9 +19,22 @@ import js.npm.formidable.IncomingForm;
 
 class Meadowlark
 {
+	var app : Express;
+	var console : Console;
+
 	public static function main() {
+		#if cluster
+		new MeadowlarkCluster().start();
+		#else
+		new Meadowlark().start();
+		#end
+	}
+
+	public function new() {
+		app = new Express();
+		console = Node.console;
+
 		var env = Node.process.env;
-		var app = new Express();
 
 		var handlebars = ExpressHandlebars.create({
 			defaultLayout: 'main',
@@ -66,6 +80,12 @@ class Meadowlark
 			next();
 		});
 
+		app.use(function(req,res,next) {
+			var cluster = js.node.Cluster.cluster;
+			if(cluster.isWorker) console.log('Worker %d received request', cluster.worker.id);
+			next();
+		});
+
 		///// View Partials /////
 
 		app.use(function(req : Request, res : Response, next) {
@@ -107,10 +127,10 @@ class Meadowlark
 		app.post('/process', function(req : Request, res : Response) {
 			var form = BodyParser.body(req);
 
-			Node.console.log('Form (from querystring): ' + req.query.form);
-			Node.console.log('CSRF token (from hidden form field): ' + form._csrf);
-			Node.console.log('Name (from visible form field): ' + form.name);
-			Node.console.log('Email (from visible form field): ' + form.email);
+			console.log('Form (from querystring): ' + req.query.form);
+			console.log('CSRF token (from hidden form field): ' + form._csrf);
+			console.log('Name (from visible form field): ' + form.name);
+			console.log('Email (from visible form field): ' + form.email);
 
 			if(req.xhr || req.accepts('json,html') == 'json'){
 				// if there were an error, we would send { error: 'error description' }
@@ -136,10 +156,10 @@ class Meadowlark
 			form.parse(req, function(err, fields, file : js.npm.formidable.File) {
 				if(err) return res.redirect(303, '/error');
 
-				Node.console.log('received fields:');
-				Node.console.log(fields);
-				Node.console.log('received files:');
-				Node.console.log(file);
+				console.log('received fields:');
+				console.log(fields);
+				console.log('received files:');
+				console.log(file);
 
 				res.redirect(303, '/thank-you');
 			});
@@ -189,18 +209,20 @@ class Meadowlark
 			if(Std.is(err, ContractException)) 
 				logContractException(cast err);
 			else 
-				Node.console.error(err.stack);
+				console.error(err.stack);
 
 			res.status(500);
 			res.render('500');
 		});
+	}
 
-		///// Start /////
-
-		app.listen(app.get("port"), function() {
-			Node.console.log('Express started in ' + app.get("env") + ' mode on http://localhost:' + 
-				app.get("port") + '; Ctrl+C to terminate.');
-		});
+	public function start() {
+		js.node.Http.createServer(app).listen(app.get("port"), function() {
+			console.log('Express started in ' + 
+				app.get("env") + ' mode on http://localhost:' + 
+				app.get("port") + '; Ctrl+C to terminate.'
+			);
+		});		
 	}
 
 	private static function getWeatherData() {
@@ -231,17 +253,17 @@ class Meadowlark
 		};
 	}
 
-	private static function logContractException(e : ContractException) {
-		Node.console.error("ContractException:");
-		Node.console.error(e.message);
-		Node.console.error(e.object);
+	private function logContractException(e : ContractException) {
+		console.error("ContractException:");
+		console.error(e.message);
+		console.error(e.object);
 		for (s in e.callStack) switch s {
-			case FilePos(s, file, line): Node.console.error('$file:$line');
+			case FilePos(s, file, line): console.error('$file:$line');
 			case _:
 		}
 	}
 
-	private static function mailExample() {
+	private function mailExample() {
 		js.npm.Nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
@@ -254,7 +276,7 @@ class Meadowlark
 			subject: 'hello',
 			text: 'hello world!'
 		}, function(err) {
-			if(err) Node.console.error('Unable to send email: ' + err);
+			if(err) console.error('Unable to send email: ' + err);
 		});
 	}
 }
