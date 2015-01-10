@@ -3,7 +3,6 @@ package js.npm.formidable;
 import js.node.http.ClientRequest;
 
 extern class IncomingForm
-implements npm.Package.RequireNamespace<"formidable","~1.0.16">
 {
 	public var encoding : String;
 	public var uploadDir : String;

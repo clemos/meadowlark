@@ -4,6 +4,7 @@ import haxecontracts.ContractException;
 import js.Node;
 import js.node.Process;
 import js.npm.Express;
+import js.npm.express.Compression;
 import js.npm.express.CookieParser;
 import js.npm.express.Session;
 import js.npm.ExpressHandlebars;
@@ -39,10 +40,15 @@ class Meadowlark
 
 		///// Files and Parsers /////
 
+		app.use(new Compression());
 		app.use(new Static(Node.__dirname + '/public'));
 		app.use(BodyParser.urlencoded({extended: true}));
 		app.use(new CookieParser(Credentials.cookieSecret));
-		app.use(new Session({secret: Credentials.cookieSecret}));
+		app.use(new Session({
+			secret: Credentials.cookieSecret,
+			resave: false,
+			saveUninitialized: false
+		}));
 
 		///// Tests /////
 
@@ -223,5 +229,22 @@ class Meadowlark
 			case FilePos(s, file, line): Node.console.error('$file:$line');
 			case _:
 		}
+	}
+
+	private static function mailExample() {
+		js.npm.Nodemailer.createTransport({
+			service: 'gmail',
+			auth: {
+				user: Credentials.gmail.user,
+				pass: Credentials.gmail.password
+			}
+		}).sendMail({
+			from: "someone@example.com",
+			to: 'receiver@address',
+			subject: 'hello',
+			text: 'hello world!'
+		}, function(err) {
+			if(err) Node.console.error('Unable to send email: ' + err);
+		});
 	}
 }
