@@ -18,7 +18,7 @@ There are a few haxelib dependencies that will reveal themselves when you compil
 
 ## Compiling and Running
 
-Compile with `haxe meadowlark.hxml`, then run with `node meadowlark.js` in the `www` directory. Browse to `http://localhost:3000` and it *should* work.
+Compile with `haxe meadowlark.hxml`, then go to the `www` directory and run with `node meadowlark.js` or `forever -w meadowlark.js`. Then browse to `http://localhost:3000` and it *should* work.
 
 ## Tests
 
