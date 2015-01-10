@@ -1,7 +1,9 @@
 package;
 
 import haxecontracts.ContractException;
+import js.Error;
 import js.Node;
+import js.node.Fs;
 import js.node.http.Server;
 import js.node.Process;
 import js.node.stdio.Console;
@@ -18,6 +20,8 @@ import js.npm.express.Response;
 import js.npm.express.Static;
 import js.npm.Formidable;
 import js.npm.formidable.IncomingForm;
+import models.Vacation;
+import models.Vacation.VacationManager;
 
 class Meadowlark
 {
@@ -147,6 +151,29 @@ class Meadowlark
 			next();
 		});		
 
+		///// Database /////
+
+		var mongoose = js.npm.Mongoose.mongoose;
+		var db : js.npm.mongoose.Mongoose;
+		var opts = {
+			server: {
+				socketOptions: { keepAlive: 1 }
+			}
+		};
+
+		switch(app.get('env')) {
+			case 'development':
+				db = mongoose.connect(Credentials.mongo.devolopment.connectionString, cast opts);
+			case 'production':
+				db = mongoose.connect(Credentials.mongo.production.connectionString, cast opts);
+			case _:
+				throw new Error('Unknown execution environment: ' + app.get('env'));
+		}
+
+		var vacation = VacationManager.build(db, "Vacation");
+
+		seedDatabase(db);
+
 		///// Basic routes /////
 
 		app.get('/', function(req : Request, res : Response) {
@@ -157,6 +184,26 @@ class Meadowlark
 			res.render('about', {
 				fortune: FortuneCookies.getFortune(),
 				pageTestScript: '/qa/tests-about.js'
+			});
+		});
+
+		///// Vacations /////
+
+		app.get('/vacations', function(req : Request, res : Response) {
+			vacation.find({available: true}, function(err, vacations) {
+				var context = {
+					vacations: vacations.map(function(vacation) {
+						return {
+							sku: vacation.sku,
+							name: vacation.name,
+							description: vacation.description,
+							price: vacation.getDisplayPrice(),
+							inSeason: vacation.inSeason
+						}
+					})
+				};
+
+				res.render('vacations', context);
 			});
 		});
 
@@ -192,20 +239,43 @@ class Meadowlark
 			res.render('contest/vacation-photo', {
 				year: now.getFullYear(), month: now.getMonth()
 			});
-		});		
+		});
+
+		function saveContestEntry(contestName, email, year, month, photoPath) {
+			// TODO
+		}
 
 		app.post('/contest/vacation-photo/:year/:month', function(req : Request, res : Response) {
 			var form = Formidable.IncomingForm();
+			var vacationPhotoDir = Node.__dirname + '/data/vacation-photo';
 
-			form.parse(req, function(err, fields, file : js.npm.formidable.File) {
-				if(err) return res.redirect(303, '/error');
+			form.parse(req, function(err, fields, photo : js.npm.formidable.File) {
+				var session = Session.session(req);
+				if(err) {
+					session.flash = {
+						type: 'danger',
+						intro: 'Oops!',
+						message: 'There was an error processing your submission. ' +
+							'Please try again.'
+					};
+					return res.redirect(303, '/contest/vacation-photo');
+				}
 
-				console.log('received fields:');
-				console.log(fields);
-				console.log('received files:');
-				console.log(file);
+				var dir = vacationPhotoDir + '/' + Date.now();
+				var path = dir + '/' + photo.name;
+				
+				Fs.mkdirSync(dir);
+				Fs.renameSync(photo.path, dir + '/' + photo.name);
 
-				res.redirect(303, '/thank-you');
+				saveContestEntry('vacation-photo', fields.email, req.params.year, req.params.month, path);
+
+				session.flash = {
+					type: 'success',
+					intro: 'Good luck!',
+					message: 'You have been entered into the contest.'
+				};
+
+				res.redirect(303, '/contest/vacation-photo/entries');
 			});
 		});
 
@@ -335,6 +405,59 @@ class Meadowlark
 			text: 'hello world!'
 		}, function(err) {
 			if(err) console.error('Unable to send email: ' + err);
+		});
+	}
+
+	private function seedDatabase(db) {
+		var vacation = VacationManager.build(db, "Vacation");
+
+		vacation.find(function(err, vacations) {
+			if(vacations.length > 0) return;
+
+			vacation.construct({
+				name: 'Hood River Day Trip',
+				slug: 'hood-river-day-trip',
+				category: 'Day Trip',
+				sku: 'HR199',
+				description: 'Spend a day sailing on the Columbia and ' +
+					'enjoying craft beers in Hood River!',
+				priceInCents: 9995,
+				tags: ['day trip', 'hood river', 'sailing', 'windsurfing', 'breweries'],
+				inSeason: true,
+				maximumGuests: 16,
+				available: true,
+				packagesSold: 0
+			}).save();
+
+			vacation.construct({
+				name: 'Oregon Coast Getaway',
+				slug: 'oregon-coast-getaway',
+				category: 'Weekend Getaway',
+				sku: 'OC39',
+				description: 'Enjoy the ocean air and quaint coastal towns!',
+				priceInCents: 269995,
+				tags: ['weekend getaway', 'oregon coast', 'beachcombing'],
+				inSeason: false,
+				maximumGuests: 8,
+				available: true,
+				packagesSold: 0
+			}).save();
+
+			vacation.construct({
+				name: 'Rock Climbing in Bend',
+				slug: 'rock-climbing-in-bend',
+				category: 'Adventure',
+				sku: 'B99',
+				description: 'Experience the thrill of climbing in the high desert.',
+				priceInCents: 289995,
+				tags: ['weekend getaway', 'bend', 'high desert', 'rock climbing'],
+				inSeason: true,
+				requiresWaiver: true,
+				maximumGuests: 4,
+				available: false,
+				packagesSold: 0,
+				notes: 'The tour guide is currently recovering from a skiing accident.'
+			}).save();
 		});
 	}
 }
