@@ -6,6 +6,8 @@ import js.node.Process;
 import js.npm.Express;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
+import js.npm.express.Morgan;
+import js.npm.express.morgan.MorganFormat;
 import js.npm.express.Session;
 import js.npm.ExpressHandlebars;
 import js.npm.express.BodyParser;
@@ -49,6 +51,14 @@ class Meadowlark
 			resave: false,
 			saveUninitialized: false
 		}));
+
+		///// Logging /////
+
+		switch(app.get('env')) {
+			case 'development':
+				app.use(new Morgan(MorganFormat.dev));
+			case _:
+		}
 
 		///// Tests /////
 
@@ -189,7 +199,8 @@ class Meadowlark
 		///// Start /////
 
 		app.listen(app.get("port"), function() {
-			Node.console.log('Express started on http://localhost:' + app.get("port") + '; Ctrl+C to terminate.');
+			Node.console.log('Express started in ' + app.get("env") + ' mode on http://localhost:' + 
+				app.get("port") + '; Ctrl+C to terminate.');
 		});
 	}
 
