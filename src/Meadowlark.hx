@@ -102,6 +102,12 @@ class Meadowlark
 			case 'development':
 				app.use(new Morgan(MorganFormat.dev));
 				app.use(new ErrorHandler());
+
+				app.use(function(req,res,next) {
+					var cluster = js.node.Cluster.cluster;
+					if(cluster.isWorker) console.log('Worker %d received request', cluster.worker.id);
+					next();
+				});
 			case _:
 		}
 
@@ -121,12 +127,6 @@ class Meadowlark
 
 		app.use(function(req : Request, res : Response, next) {
 			res.locals.showTests = app.get('env') != 'production' && req.query.test == '1';
-			next();
-		});
-
-		app.use(function(req,res,next) {
-			var cluster = js.node.Cluster.cluster;
-			if(cluster.isWorker) console.log('Worker %d received request', cluster.worker.id);
 			next();
 		});
 

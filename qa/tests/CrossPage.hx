@@ -2,6 +2,9 @@ package tests;
 
 import buddy.*;
 import js.html.InputElement;
+import js.Node;
+import js.npm.Loadtest;
+import js.npm.Mute;
 import js.npm.Zombie;
 using buddy.Should;
 
@@ -52,6 +55,29 @@ class CrossPage extends BuddySuite
 						browser.visit("http://localhost:3000/tours/request-group-rate", function() {
 							inputField = cast browser.field('referrer');
 							inputField.value.should.be('');
+							done();
+						});
+					});
+				});
+			});
+		});
+
+		describe("Stress tests", {
+			describe("The Homepage", {
+				it("should handle 100 requests per second", function(done) {
+					var options = {
+						url: 'http://localhost:3000',
+						concurrency: 4,
+						maxRequests: 100
+					};
+
+					// Mute stdout/stderr
+					Mute.mute(function(unmute) {
+						LoadTest.loadTest(options, function(err, result) {
+							if(err != null) err.should.be(null);
+							result.totalTimeSeconds.should.beLessThan(1);
+
+							unmute();
 							done();
 						});
 					});
