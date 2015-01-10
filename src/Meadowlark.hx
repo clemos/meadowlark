@@ -4,8 +4,10 @@ import haxecontracts.ContractException;
 import js.Node;
 import js.node.Process;
 import js.npm.Express;
+import js.npm.express.CookieParser;
+import js.npm.express.Session;
 import js.npm.ExpressHandlebars;
-import js.npm.connect.BodyParser;
+import js.npm.express.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Static;
@@ -35,10 +37,12 @@ class Meadowlark
 
 		app.set('port', env.PORT != null ? env.PORT : 3000);
 
-		///// Static /////
+		///// Files and Parsers /////
 
 		app.use(new Static(Node.__dirname + '/public'));
 		app.use(BodyParser.urlencoded({extended: true}));
+		app.use(new CookieParser(Credentials.cookieSecret));
+		app.use(new Session({secret: Credentials.cookieSecret}));
 
 		///// Tests /////
 
@@ -47,13 +51,22 @@ class Meadowlark
 			next();
 		});
 
-		///// Partials /////
+		///// View Partials /////
 
 		app.use(function(req : Request, res : Response, next) {
 			if(!res.locals.partials) res.locals.partials = {};
 			res.locals.partials.weather = getWeatherData();
 			next();
 		});
+
+		///// Flash messages /////
+
+		app.use(function(req : Request, res : Response, next) {
+			var session = Session.session(req);
+			res.locals.flash = session.flash;
+			Reflect.deleteField(session, 'flash');
+			next();
+		});		
 
 		///// Basic routes /////
 
@@ -77,10 +90,12 @@ class Meadowlark
 		});
 
 		app.post('/process', function(req : Request, res : Response) {
+			var form = BodyParser.body(req);
+
 			Node.console.log('Form (from querystring): ' + req.query.form);
-			Node.console.log('CSRF token (from hidden form field): ' + untyped req.body._csrf);
-			Node.console.log('Name (from visible form field): ' + untyped req.body.name);
-			Node.console.log('Email (from visible form field): ' + untyped req.body.email);
+			Node.console.log('CSRF token (from hidden form field): ' + form._csrf);
+			Node.console.log('Name (from visible form field): ' + form.name);
+			Node.console.log('Email (from visible form field): ' + form.email);
 
 			if(req.xhr || req.accepts('json,html') == 'json'){
 				// if there were an error, we would send { error: 'error description' }
