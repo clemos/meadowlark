@@ -7,7 +7,6 @@ import js.npm.Express;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
 import js.npm.express.Morgan;
-import js.npm.express.morgan.MorganFormat;
 import js.npm.express.Session;
 import js.npm.ExpressHandlebars;
 import js.npm.express.BodyParser;

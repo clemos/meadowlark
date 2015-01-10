@@ -1,9 +1,22 @@
 package js.npm.express;
 
-import js.npm.express.morgan.MorganFormat;
-import js.npm.express.morgan.MorganOptions;
 import js.node.http.ClientRequest;
 import js.node.http.ServerResponse;
+import js.node.stream.Writable;
+
+typedef MorganOptions = {
+	?immediate : Bool,
+	?skip : ClientRequest -> ServerResponse -> Bool,
+	?stream : IWritable,
+}
+
+@:enum abstract MorganFormat(String) from String to String {
+	var combined = "combined";
+	var common = "common";
+	var dev = "dev";
+	var short = "short";
+	var tiny = "tiny";
+}
 
 extern class Morgan
 implements npm.Package.Require<"morgan", "~1.5.1">
