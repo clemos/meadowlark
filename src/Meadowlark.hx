@@ -39,6 +39,14 @@ class Meadowlark
 
 		app.set('port', env.PORT != null ? env.PORT : 3000);
 
+		///// Logging /////
+
+		switch(app.get('env')) {
+			case 'development':
+				app.use(new Morgan(MorganFormat.dev));
+			case _:
+		}
+
 		///// Files and Parsers /////
 
 		app.use(new Compression());
@@ -50,14 +58,6 @@ class Meadowlark
 			resave: false,
 			saveUninitialized: false
 		}));
-
-		///// Logging /////
-
-		switch(app.get('env')) {
-			case 'development':
-				app.use(new Morgan(MorganFormat.dev));
-			case _:
-		}
 
 		///// Tests /////
 
