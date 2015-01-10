@@ -2,11 +2,13 @@ package;
 
 import haxecontracts.ContractException;
 import js.Node;
+import js.node.http.Server;
 import js.node.Process;
 import js.node.stdio.Console;
 import js.npm.Express;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
+import js.npm.express.ErrorHandler;
 import js.npm.express.Morgan;
 import js.npm.express.Session;
 import js.npm.ExpressHandlebars;
@@ -19,6 +21,7 @@ import js.npm.formidable.IncomingForm;
 
 class Meadowlark
 {
+	var server : Server;
 	var app : Express;
 	var console : Console;
 
@@ -53,11 +56,52 @@ class Meadowlark
 
 		app.set('port', env.PORT != null ? env.PORT : 3000);
 
+		///// Error catching with domains /////
+
+		app.use(function(req : Request, res : Response, next) {
+			var domain = js.node.Domain.create();
+			domain.on('error', function(err) {
+				console.error("DOMAIN ERROR CAUGHT");
+				logError(err);
+				try {
+					haxe.Timer.delay(function() {
+						console.error("Failsafe shutdown.");
+						Node.process.exit(1);
+					}, 5000);
+
+					var worker = js.node.Cluster.cluster.worker;
+					if(worker != null) worker.disconnect();
+
+					server.close();
+
+					try {
+						next(err);
+					} catch(err : Dynamic) {
+						// if Express error route failed, try plain Node response
+						console.error('Express error mechanism failed.\n');
+						logError(err);
+						res.statusCode = 500;
+						res.setHeader('content-type', 'text/plain');
+						res.end('Server error.');						
+					}
+				} catch(err : Dynamic) {
+					console.error('Unable to send 500 response.\n');
+					logError(err);
+				}
+			});
+
+			domain.add(req);
+			domain.add(res);
+
+			domain.run(next);
+		});		
+
 		///// Logging /////
 
 		switch(app.get('env')) {
 			case 'development':
 				app.use(new Morgan(MorganFormat.dev));
+				app.use(new ErrorHandler());
 			case _:
 		}
 
@@ -198,6 +242,12 @@ class Meadowlark
 			});
 		});
 
+		app.get('/epic-fail', function(req : Request, res : Response) {
+			Node.process.nextTick(function(){
+				throw new js.Error('Kaboom!');
+			});
+		});
+
 		///// Error handling /////
 
 		app.use(function(req : Request, res : Response) {
@@ -216,13 +266,16 @@ class Meadowlark
 		});
 	}
 
-	public function start() {
-		js.node.Http.createServer(app).listen(app.get("port"), function() {
+	public function start() : Server {
+		server = js.node.Http.createServer(app);
+		server.listen(app.get("port"), function() {
 			console.log('Express started in ' + 
 				app.get("env") + ' mode on http://localhost:' + 
 				app.get("port") + '; Ctrl+C to terminate.'
 			);
-		});		
+		});
+
+		return server;
 	}
 
 	private static function getWeatherData() {
@@ -251,6 +304,11 @@ class Meadowlark
 				},
 			],
 		};
+	}
+
+	private function logError(err : Dynamic) : Void {
+		if(Std.is(err, ContractException)) logContractException(cast err);
+		else console.error(err.stack);
 	}
 
 	private function logContractException(e : ContractException) {
