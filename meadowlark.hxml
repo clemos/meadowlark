@@ -4,6 +4,3 @@
 -cp src
 -js www/meadowlark.js
 -main Meadowlark
-
--cmd haxe meadowlark-tests.hxml
--cmd haxe meadowlark-client-tests.hxml

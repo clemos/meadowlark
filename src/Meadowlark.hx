@@ -1,5 +1,6 @@
 package;
 
+import handlers.*;
 import haxecontracts.ContractException;
 import js.Error;
 import js.Node;
@@ -23,6 +24,7 @@ import js.npm.Formidable;
 import js.npm.formidable.IncomingForm;
 import js.npm.mongoose.Mongoose;
 import js.npm.Nodemailer;
+import js.npm.nodemailer.Transporter;
 import models.Vacation;
 import models.Vacation.VacationManager;
 import models.VacationInSeasonListener;
@@ -31,8 +33,9 @@ class Meadowlark
 {
 	var server : Server;
 	var app : Express;
-	var console : Console;
 	var db : Mongoose;
+	var mailer : Transporter;
+	var logger : Logger;
 
 	public static function main() {
 		#if cluster
@@ -44,7 +47,7 @@ class Meadowlark
 
 	public function new() {
 		app = new Express();
-		console = Node.console;
+		logger = Logger.instance;
 
 		var env = Node.process.env;
 
@@ -83,18 +86,27 @@ class Meadowlark
 				throw new Error('Unknown execution environment: ' + app.get('env'));
 		}
 
-		seedDatabase(db);
+		seedDatabase();
+
+		///// Mailer /////
+
+		mailer = Nodemailer.createTransport({
+			service: 'gmail',
+			auth: {
+				user: Credentials.gmail.user,
+				pass: Credentials.gmail.password
+			}
+		});
 
 		///// Error catching with domains /////
 
 		app.use(function(req : Request, res : Response, next) {
 			var domain = js.node.Domain.create();
 			domain.on('error', function(err) {
-				console.error("DOMAIN ERROR CAUGHT");
-				logError(err);
+				logger.error(err);
 				try {
 					haxe.Timer.delay(function() {
-						console.error("Failsafe shutdown.");
+						logger.error("Failsafe shutdown.");
 						Node.process.exit(1);
 					}, 5000);
 
@@ -107,15 +119,15 @@ class Meadowlark
 						next(err);
 					} catch(err : Dynamic) {
 						// if Express error route failed, try plain Node response
-						console.error('Express error mechanism failed.\n');
-						logError(err);
+						logger.error('Express error mechanism failed.\n');
+						logger.error(err);
 						res.statusCode = 500;
 						res.setHeader('content-type', 'text/plain');
 						res.end('Server error.');						
 					}
 				} catch(err : Dynamic) {
 					console.error('Unable to send 500 response.\n');
-					logError(err);
+					logger.error(err);
 				}
 			});
 
@@ -148,7 +160,9 @@ class Meadowlark
 		app.use(new CookieParser(Credentials.cookieSecret));
 		app.use(new Session({
 			secret: Credentials.cookieSecret,
-			store: new MongooseSession(db)
+			store: new MongooseSession(db),
+			resave: false,
+			saveUninitialized: false
 		}));
 
 		///// Tests /////
@@ -177,270 +191,62 @@ class Meadowlark
 
 		// ========== Routes ==========
 
-		///// Basic routes /////
+		var main = new Main();
 
-		app.get('/', function(req : Request, res : Response) {
-			res.render('home');
-		});
+		app.get('/', main.home);
+		app.get('/about', main.about);
 
-		app.get('/about', function(req : Request, res : Response) {
-			res.render('about', {
-				fortune: FortuneCookies.getFortune(),
-				pageTestScript: '/qa/tests-about.js'
-			});
-		});
+		var vacations = new Vacations(db);
 
-		///// Vacations /////
+		app.get('/set-currency/:currency', vacations.setCurrency);
+		app.get('/vacations', vacations.vacations);
 
-		var convertFromUSD = function(value : Float, currency) {
-			return switch currency {
-				case 'USD': '$' + value * 1;
-				case 'GBP': '£' + value * 0.6;
-				case 'BTC': 'B' + value * 0.0023707918444761;
-				case _: null;
+		var cart = new Cart(mailer);
+
+		app.post('/cart/checkout', cart.checkout);			
+
+		var newsletter = new Newsletter();
+
+		app.get('/newsletter', newsletter.newsletter);
+		app.post('/process', newsletter.process);
+
+		var contest = new VacationPhotoContest();
+
+		app.get('/contest/vacation-photo', contest.vacationPhoto);
+		app.post('/contest/vacation-photo/:year/:month', contest.vacationPhotoSumbission);
+
+		// Tour routes are handled by the static router.
+
+		var notifications = new Notifications(db);
+
+		app.get('/notify-me-when-in-season', notifications.notifyMe);
+		app.post('/notify-me-when-in-season', notifications.notifyMeSubmission);
+
+		var test = new Test();
+
+		app.get('/data/nursery-rhyme', test.nurseryRhyme);
+		app.get('/epic-fail', test.epicFail);
+
+		///// Static routing /////
+
+		var autoViews = {};
+
+		app.use(function(req : Request, res : Response, next) {
+			var path = req.path.toLowerCase();
+			// check cache; if it's there, render the view
+			if(Reflect.hasField(autoViews, path)) 
+				return res.render(Reflect.field(autoViews, path));
+
+			// if it's not in the cache, see if there's
+			// a .handlebars file that matches
+			if(Fs.existsSync(Node.__dirname + '/views' + path + '.handlebars')) {
+				var cachePath = ~/^\//.replace(path, '');
+				Reflect.setField(autoViews, path, cachePath);
+				return res.render(cachePath);
 			}
-		}
 
-		app.get('/set-currency/:currency', function(req : Request, res : Response) {
-			var session = Session.session(req);
-			session.currency = req.params.currency;
-			return res.redirect(303, '/vacations');
-		});
-
-		app.get('/vacations', function(req : Request, res : Response) {
-			var vacation = Vacation.build(db);
-			var session = Session.session(req);
-
-			vacation.find({available: true}, function(err, vacations) {
-				var currency = session.currency == null ? 'USD' : session.currency;
-				var context = {
-					currency: currency,
-					vacations: vacations.map(function(vacation) {
-						return {
-							sku: vacation.sku,
-							name: vacation.name,
-							description: vacation.description,
-							price: convertFromUSD(vacation.priceInCents / 100, currency),
-							inSeason: vacation.inSeason
-						}
-					})
-				};
-
-				var field = switch(currency) {
-					case 'GBP': 'currencyGBP';
-					case 'BTC': 'currencyBTC';
-					case _: 'currencyUSD';
-				}
-
-				Reflect.setField(context, field, 'selected');
-
-				res.render('vacations', context);
-			});
-		});
-
-		///// Cart /////
-
-		var VALID_EMAIL_REGEX = ~/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
-
-		app.post('/cart/checkout', function(req : Request, res : Response, next) {
-			var cart : Dynamic = Session.session(req).cart;
-			var form = BodyParser.body(req);
-			if(!cart) next(new Error('Cart does not exist.'));
-
-			var name = form.name == null ? '' : form.name;
-			var email = form.name == null ? '' : form.email;
-
-			// input validation
-			if(!VALID_EMAIL_REGEX.match(email))
-				return next(new Error('Invalid email address.'));
-
-			// assign a random cart ID; normally we would use a database ID here
-			cart.number = ~/^0\.0*/.replace(Std.string(Math.random()), '');
-			cart.billing = {
-				name: name,
-				email: email,
-			};
-
-			res.render('email/cart-thank-you', {layout: null, cart: cart}, function(err, html) {
-				if(err != null) console.log('error in email template');
-
-				var mailTransport = Nodemailer.createTransport({
-					service: 'gmail',
-					auth: {
-						user: Credentials.gmail.user,
-						pass: Credentials.gmail.password
-					}
-				});
-
-				mailTransport.sendMail({
-					from: '"Meadowlark Travel": info@meadowlarktravel.com',
-					to: cart.billing.email,
-					subject: 'Thank You for Book your Trip with Meadowlark',
-					html: html,
-					generateTextFromHtml: true
-				}, function(err : Dynamic){
-					if(err) console.error('Unable to send confirmation: ' + err.stack);
-				});
-			});
-
-			res.render('cart-thank-you', { cart: cart });
-		});			
-
-		///// Newsletter /////
-
-		app.get('/newsletter', function(req : Request, res : Response) {
-			// we will learn about CSRF later...for now, we just
-			// provide a dummy value
-			res.render('newsletter', { csrf: 'CSRF token goes here' });
-		});
-
-		app.post('/process', function(req : Request, res : Response) {
-			var form = BodyParser.body(req);
-
-			console.log('Form (from querystring): ' + req.query.form);
-			console.log('CSRF token (from hidden form field): ' + form._csrf);
-			console.log('Name (from visible form field): ' + form.name);
-			console.log('Email (from visible form field): ' + form.email);
-
-			if(req.xhr || req.accepts('json,html') == 'json'){
-				// if there were an error, we would send { error: 'error description' }
-				res.send({ success: true });
-			} else {
-				// if there were an error, we would redirect to an error page
-				res.redirect(303, '/thank-you');
-			}
-		});
-
-		///// Vacation Photos /////
-
-		app.get('/contest/vacation-photo', function(req : Request, res : Response) {
-			var now = Date.now();
-			res.render('contest/vacation-photo', {
-				year: now.getFullYear(), month: now.getMonth()
-			});
-		});
-
-		function saveContestEntry(contestName, email, year, month, photoPath) {
-			// TODO
-		}
-
-		app.post('/contest/vacation-photo/:year/:month', function(req : Request, res : Response) {
-			var form = Formidable.IncomingForm();
-			var vacationPhotoDir = Node.__dirname + '/data/vacation-photo';
-
-			form.parse(req, function(err, fields, photos) {
-				var session = Session.session(req);
-				var photo = photos.photo;
-
-				if(err) {
-					session.flash = {
-						type: 'danger',
-						intro: 'Oops!',
-						message: 'There was an error processing your submission. ' +
-							'Please try again.'
-					};
-					return res.redirect(303, '/contest/vacation-photo');
-				}
-
-				var dir = vacationPhotoDir + '/' + Date.now().getTime();
-				var path = dir + '/' + photo.name;
-				
-				Fs.mkdirSync(dir);
-
-				// /tmp uses a different partition and filesystem.
-				// need to copy and unlink: http://stackoverflow.com/a/4571377/70894
-				var is = Fs.createReadStream(photo.path);
-				var os = Fs.createWriteStream(path);
-
-				is.pipe(os);
-				is.on('end', Fs.unlinkSync.bind(photo.path));
-
-				saveContestEntry('vacation-photo', fields.email, req.params.year, req.params.month, path);
-
-				session.flash = {
-					type: 'success',
-					intro: 'Good luck!',
-					message: 'You have been entered into the contest.'
-				};
-
-				res.redirect(303, '/contest/vacation-photo/entries');
-			});
-		});
-
-		///// Tours /////
-
-		app.get('/tours/hood-river', function(req : Request, res : Response) {
-			res.render('tours/hood-river');
-		});
-
-		app.get('/tours/oregon-coast', function(req : Request, res : Response) {
-			res.render('tours/oregon-coast');
-		});
-
-		app.get('/tours/request-group-rate', function(req : Request, res : Response) {
-			res.render('tours/request-group-rate');
-		});
-
-		///// Notifications /////
-
-		app.get('/notify-me-when-in-season', function(req : Request, res : Response) {
-			res.render('notify-me-when-in-season', { sku: req.query.sku });
-		});
-
-		app.post('/notify-me-when-in-season', function(req : Request, res : Response) {
-			var listeners = VacationInSeasonListener.build(db);
-			var session = Session.session(req);
-			var form = BodyParser.body(req);
-
-			listeners.update(
-				{email: form.email},
-				{"$push": { skus: form.sku }},
-				{upsert: true},
-				function(err, listeners) {
-					if(err != null) {
-						logError(err);
-						session.flash = {
-							type: 'danger',
-							intro: 'Ooops!',
-							message: 'There was an error processing your request.',
-						};
-						return res.redirect(303, '/vacations');
-					}
-					session.flash = {
-						type: 'success',
-						intro: 'Thank you!',
-						message: 'You will be notified when this vacation is in season.',
-					};
-					return res.redirect(303, '/vacations');				
-				}
-			);
-		});
-
-		// ===== End of normal routes =====
-
-		///// Test routes /////
-
-		app.get('/jquery-test', function(req : Request, res : Response) {
-			res.render('jquery-test');
-		});
-
-		app.get('/nursery-rhyme', function(req : Request, res : Response) {
-			res.render('nursery-rhyme');
-		});
-
-		app.get('/data/nursery-rhyme', function(req : Request, res : Response) {
-			res.json({
-				animal: 'squirrel',
-				bodyPart: 'tail',
-				adjective: 'bushy',
-				noun: 'h3ck',
-			});
-		});
-
-		app.get('/epic-fail', function(req : Request, res : Response) {
-			Node.process.nextTick(function(){
-				throw new js.Error('Kaboom!');
-			});
+			// no view found; pass on to 404 handler
+			next();
 		});
 
 		///// Error handling /////
@@ -451,11 +257,7 @@ class Meadowlark
 		});
 
 		app.use(function(err, req : js.npm.express.Request, res : js.npm.express.Response, next) {
-			if(Std.is(err, ContractException)) 
-				logContractException(cast err);
-			else 
-				console.error(err.stack);
-
+			logger.error(err);
 			res.status(500);
 			res.render('500');
 		});
@@ -464,7 +266,7 @@ class Meadowlark
 	public function start() : Server {
 		server = js.node.Http.createServer(app);
 		server.listen(app.get("port"), function() {
-			console.log('Express started in ' + 
+			logger.log('Express started in ' + 
 				app.get("env") + ' mode on http://localhost:' + 
 				app.get("port") + '; Ctrl+C to terminate.'
 			);
@@ -501,21 +303,6 @@ class Meadowlark
 		};
 	}
 
-	private function logError(err : Dynamic) : Void {
-		if(Std.is(err, ContractException)) logContractException(cast err);
-		else console.error(err.stack);
-	}
-
-	private function logContractException(e : ContractException) {
-		console.error("ContractException:");
-		console.error(e.message);
-		console.error(e.object);
-		for (s in e.callStack) switch s {
-			case FilePos(s, file, line): console.error('$file:$line');
-			case _:
-		}
-	}
-
 	private function mailExample() {
 		Nodemailer.createTransport({
 			service: 'gmail',
@@ -533,7 +320,7 @@ class Meadowlark
 		});
 	}
 
-	private function seedDatabase(db) {
+	private function seedDatabase() {
 		var vacation = VacationManager.build(db, "Vacation");
 
 		vacation.find(function(err, vacations) {
