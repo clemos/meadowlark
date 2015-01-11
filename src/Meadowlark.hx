@@ -20,14 +20,18 @@ import js.npm.express.Response;
 import js.npm.express.Static;
 import js.npm.Formidable;
 import js.npm.formidable.IncomingForm;
+import js.npm.mongoose.Mongoose;
+import js.npm.Nodemailer;
 import models.Vacation;
 import models.Vacation.VacationManager;
+import models.VacationInSeasonListener;
 
 class Meadowlark
 {
 	var server : Server;
 	var app : Express;
 	var console : Console;
+	var db : Mongoose;
 
 	public static function main() {
 		#if cluster
@@ -154,8 +158,7 @@ class Meadowlark
 		///// Database /////
 
 		var mongoose = js.npm.Mongoose.mongoose;
-		var db : js.npm.mongoose.Mongoose;
-		var opts = {
+		var dbOpts = {
 			server: {
 				socketOptions: { keepAlive: 1 }
 			}
@@ -163,16 +166,16 @@ class Meadowlark
 
 		switch(app.get('env')) {
 			case 'development':
-				db = mongoose.connect(Credentials.mongo.devolopment.connectionString, cast opts);
+				db = mongoose.connect(Credentials.mongo.devolopment.connectionString, cast dbOpts);
 			case 'production':
-				db = mongoose.connect(Credentials.mongo.production.connectionString, cast opts);
+				db = mongoose.connect(Credentials.mongo.production.connectionString, cast dbOpts);
 			case _:
 				throw new Error('Unknown execution environment: ' + app.get('env'));
 		}
 
-		var vacation = VacationManager.build(db, "Vacation");
-
 		seedDatabase(db);
+
+		// ========== Routes ==========
 
 		///// Basic routes /////
 
@@ -190,6 +193,7 @@ class Meadowlark
 		///// Vacations /////
 
 		app.get('/vacations', function(req : Request, res : Response) {
+			var vacation = Vacation.build(db);
 			vacation.find({available: true}, function(err, vacations) {
 				var context = {
 					vacations: vacations.map(function(vacation) {
@@ -206,6 +210,54 @@ class Meadowlark
 				res.render('vacations', context);
 			});
 		});
+
+		///// Cart /////
+
+		var VALID_EMAIL_REGEX = ~/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+		app.post('/cart/checkout', function(req : Request, res : Response, next) {
+			var cart : Dynamic = Session.session(req).cart;
+			var form = BodyParser.body(req);
+			if(!cart) next(new Error('Cart does not exist.'));
+
+			var name = form.name == null ? '' : form.name;
+			var email = form.name == null ? '' : form.email;
+
+			// input validation
+			if(!VALID_EMAIL_REGEX.match(email))
+				return next(new Error('Invalid email address.'));
+
+			// assign a random cart ID; normally we would use a database ID here
+			cart.number = ~/^0\.0*/.replace(Std.string(Math.random()), '');
+			cart.billing = {
+				name: name,
+				email: email,
+			};
+
+			res.render('email/cart-thank-you', {layout: null, cart: cart}, function(err, html) {
+				if(err != null) console.log('error in email template');
+
+				var mailTransport = Nodemailer.createTransport({
+					service: 'gmail',
+					auth: {
+						user: Credentials.gmail.user,
+						pass: Credentials.gmail.password
+					}
+				});
+
+				mailTransport.sendMail({
+					from: '"Meadowlark Travel": info@meadowlarktravel.com',
+					to: cart.billing.email,
+					subject: 'Thank You for Book your Trip with Meadowlark',
+					html: html,
+					generateTextFromHtml: true
+				}, function(err : Dynamic){
+					if(err) console.error('Unable to send confirmation: ' + err.stack);
+				});
+			});
+
+			res.render('cart-thank-you', { cart: cart });
+		});			
 
 		///// Newsletter /////
 
@@ -301,6 +353,43 @@ class Meadowlark
 		app.get('/tours/request-group-rate', function(req : Request, res : Response) {
 			res.render('tours/request-group-rate');
 		});
+
+		///// Notifications /////
+
+		app.get('/notify-me-when-in-season', function(req : Request, res : Response) {
+			res.render('notify-me-when-in-season', { sku: req.query.sku });
+		});
+
+		app.post('/notify-me-when-in-season', function(req : Request, res : Response) {
+			var listeners = VacationInSeasonListener.build(db);
+			var session = Session.session(req);
+			var form = BodyParser.body(req);
+
+			listeners.update(
+				{email: form.email},
+				{"$push": { skus: form.sku }},
+				{upsert: true},
+				function(err, listeners) {
+					if(err != null) {
+						logError(err);
+						session.flash = {
+							type: 'danger',
+							intro: 'Ooops!',
+							message: 'There was an error processing your request.',
+						};
+						return res.redirect(303, '/vacations');
+					}
+					session.flash = {
+						type: 'success',
+						intro: 'Thank you!',
+						message: 'You will be notified when this vacation is in season.',
+					};
+					return res.redirect(303, '/vacations');				
+				}
+			);
+		});
+
+		// ===== End of normal routes =====
 
 		///// Test routes /////
 
@@ -401,7 +490,7 @@ class Meadowlark
 	}
 
 	private function mailExample() {
-		js.npm.Nodemailer.createTransport({
+		Nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
 				user: Credentials.gmail.user,

@@ -24,6 +24,8 @@ class VacationManager extends Manager<VacationSchema, Vacation>
 
 class Vacation extends Model<VacationSchema>
 {
+    public static function build(mongoose) { return VacationManager.build(mongoose, "Vacation"); }
+
 	public function getDisplayPrice() {
 		var num = priceInCents / 100;
 		return "$" + untyped num.toFixed(2);
