@@ -11,6 +11,7 @@ import js.npm.Express;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
 import js.npm.express.ErrorHandler;
+import js.npm.express.MongooseSession;
 import js.npm.express.Morgan;
 import js.npm.express.Session;
 import js.npm.ExpressHandlebars;
@@ -63,6 +64,26 @@ class Meadowlark
 		app.set('view engine', 'handlebars');
 
 		app.set('port', env.PORT != null ? env.PORT : 3000);
+
+		///// Database /////
+
+		var mongoose = js.npm.Mongoose.mongoose;
+		var dbOpts = {
+			server: {
+				socketOptions: { keepAlive: 1 }
+			}
+		};
+
+		switch(app.get('env')) {
+			case 'development':
+				db = mongoose.connect(Credentials.mongo.devolopment.connectionString, cast dbOpts);
+			case 'production':
+				db = mongoose.connect(Credentials.mongo.production.connectionString, cast dbOpts);
+			case _:
+				throw new Error('Unknown execution environment: ' + app.get('env'));
+		}
+
+		seedDatabase(db);
 
 		///// Error catching with domains /////
 
@@ -127,8 +148,7 @@ class Meadowlark
 		app.use(new CookieParser(Credentials.cookieSecret));
 		app.use(new Session({
 			secret: Credentials.cookieSecret,
-			resave: false,
-			saveUninitialized: false
+			store: new MongooseSession(db)
 		}));
 
 		///// Tests /////
@@ -155,26 +175,6 @@ class Meadowlark
 			next();
 		});		
 
-		///// Database /////
-
-		var mongoose = js.npm.Mongoose.mongoose;
-		var dbOpts = {
-			server: {
-				socketOptions: { keepAlive: 1 }
-			}
-		};
-
-		switch(app.get('env')) {
-			case 'development':
-				db = mongoose.connect(Credentials.mongo.devolopment.connectionString, cast dbOpts);
-			case 'production':
-				db = mongoose.connect(Credentials.mongo.production.connectionString, cast dbOpts);
-			case _:
-				throw new Error('Unknown execution environment: ' + app.get('env'));
-		}
-
-		seedDatabase(db);
-
 		// ========== Routes ==========
 
 		///// Basic routes /////
@@ -192,20 +192,47 @@ class Meadowlark
 
 		///// Vacations /////
 
+		var convertFromUSD = function(value : Float, currency) {
+			return switch currency {
+				case 'USD': '$' + value * 1;
+				case 'GBP': '£' + value * 0.6;
+				case 'BTC': 'B' + value * 0.0023707918444761;
+				case _: null;
+			}
+		}
+
+		app.get('/set-currency/:currency', function(req : Request, res : Response) {
+			var session = Session.session(req);
+			session.currency = req.params.currency;
+			return res.redirect(303, '/vacations');
+		});
+
 		app.get('/vacations', function(req : Request, res : Response) {
 			var vacation = Vacation.build(db);
+			var session = Session.session(req);
+
 			vacation.find({available: true}, function(err, vacations) {
+				var currency = session.currency == null ? 'USD' : session.currency;
 				var context = {
+					currency: currency,
 					vacations: vacations.map(function(vacation) {
 						return {
 							sku: vacation.sku,
 							name: vacation.name,
 							description: vacation.description,
-							price: vacation.getDisplayPrice(),
+							price: convertFromUSD(vacation.priceInCents / 100, currency),
 							inSeason: vacation.inSeason
 						}
 					})
 				};
+
+				var field = switch(currency) {
+					case 'GBP': 'currencyGBP';
+					case 'BTC': 'currencyBTC';
+					case _: 'currencyUSD';
+				}
+
+				Reflect.setField(context, field, 'selected');
 
 				res.render('vacations', context);
 			});

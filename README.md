@@ -2,7 +2,7 @@
 
 Following along the project in [Web Development with Node and Express](http://shop.oreilly.com/product/0636920032977.do), but using Haxe as language instead of javascript. A work in progress that will evolve using Haxe solutions instead of Node packages. For example, it's using [Buddy](https://github.com/ciscoheat/buddy) for testing instead of mocha and chai.
 
-**Current progress:** Middle of Chapter 13.
+**Current progress:** Beginning of Chapter 14.
 
 ### Todo 
 
