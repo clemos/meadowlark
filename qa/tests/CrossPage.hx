@@ -5,11 +5,13 @@ import js.html.InputElement;
 import js.Node;
 import js.npm.Loadtest;
 import js.npm.Mute;
+import js.npm.Punt;
+import js.npm.Restler;
 import js.npm.Zombie;
 using buddy.Should;
 
 @:build(buddy.GenerateMain.withSuites([
-	new CrossPage()
+	new CrossPage(), new StressTest(), new APITests()
 ]))
 class CrossPage extends BuddySuite
 {
@@ -61,7 +63,13 @@ class CrossPage extends BuddySuite
 				});
 			});
 		});
+	}	
+}
 
+class StressTest extends BuddySuite
+{
+	public function new() {
+		// For stress testing, we need to shut down console logs.
 		describe("Stress tests", {
 			describe("The Homepage", {
 				it("should handle 100 requests per second", function(done) {
@@ -71,18 +79,53 @@ class CrossPage extends BuddySuite
 						maxRequests: 100
 					};
 
-					// Mute stdout/stderr
-					Mute.mute(function(unmute) {
-						LoadTest.loadTest(options, function(err, result) {
-							if(err != null) err.should.be(null);
-							result.totalTimeSeconds.should.beLessThan(1);
-
-							unmute();
-							done();
-						});
+					LoadTest.loadTest(options, function(err, result) {
+						if(err != null) err.should.be(null);
+						result.totalTimeSeconds.should.beLessThan(1);
+						done();
 					});
 				});
 			});
 		});
-	}	
+	}
+}
+
+class APITests extends BuddySuite
+{
+	public function new() {
+		describe("API tests", {
+			var attraction = {
+				lat: 45.516011,
+				lng: -122.682062,
+				name: 'Portland Art Museum',
+				description: 'Founded in 1892, the Portland Art Museum\'s colleciton ' +
+					'of native art is not to be missed.  If modern art is more to your ' +
+					'liking, there are six stories of modern art for your enjoyment.',
+				email: 'test@meadowlarktravel.com',
+			};
+
+			var base = "http://localhost:3000";
+
+			it("should be able to add an attraction", function(done) {
+				Restler.post(base + '/api/attraction', {data: attraction})
+				.on('success', function(data) {
+					var id : String = data.id;
+					id.should.match(~/\w/);
+					done();
+				});
+			});
+
+			it('should be able to retrieve an attraction', function(done) {
+				Restler.post(base + '/api/attraction', {data:attraction})
+				.on('success', function(data) {
+					Restler.get(base + '/api/attraction/' + data.id)
+					.on('success', function(data) {
+						attraction.name.should.be(data.name);
+						attraction.description.should.be(data.description);
+						done();
+					});
+				});
+			});
+		});
+	}
 }

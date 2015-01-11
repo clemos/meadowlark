@@ -23,11 +23,14 @@ import js.npm.express.Static;
 import js.npm.Formidable;
 import js.npm.formidable.IncomingForm;
 import js.npm.mongoose.Mongoose;
+import js.npm.Mute;
 import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
+import js.npm.Punt;
 import models.Vacation;
 import models.Vacation.VacationManager;
 import models.VacationInSeasonListener;
+import models.Attraction;
 
 class Meadowlark
 {
@@ -126,7 +129,7 @@ class Meadowlark
 						res.end('Server error.');						
 					}
 				} catch(err : Dynamic) {
-					console.error('Unable to send 500 response.\n');
+					logger.error('Unable to send 500 response.\n');
 					logger.error(err);
 				}
 			});
@@ -146,7 +149,7 @@ class Meadowlark
 
 				app.use(function(req,res,next) {
 					var cluster = js.node.Cluster.cluster;
-					if(cluster.isWorker) console.log('Worker %d received request', cluster.worker.id);
+					if(cluster.isWorker) logger.log('Worker %d received request', cluster.worker.id);
 					next();
 				});
 			case _:
@@ -316,12 +319,13 @@ class Meadowlark
 			subject: 'hello',
 			text: 'hello world!'
 		}, function(err) {
-			if(err) console.error('Unable to send email: ' + err);
+			if(err) logger.error('Unable to send email: ' + err);
 		});
 	}
 
 	private function seedDatabase() {
 		var vacation = VacationManager.build(db, "Vacation");
+		var attraction = Attraction.build(db);
 
 		vacation.find(function(err, vacations) {
 			if(vacations.length > 0) return;

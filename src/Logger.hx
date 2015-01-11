@@ -15,7 +15,13 @@ class Logger
 	}
 
 	public function log( s : Dynamic , ?a1 : Dynamic , ?a2 : Dynamic , ?a3 : Dynamic ) {
-		console.log(s, a1, a2, a3);
+		var i : Int = untyped __js__('arguments.length');
+		switch i {
+			case 1: console.log(s);
+			case 2: console.log(s, a1);
+			case 3: console.log(s, a1, a2);
+			case 4: console.log(s, a1, a2, a3);
+		}
 	}
 
 	public function error(o : Dynamic) {

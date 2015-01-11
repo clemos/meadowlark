@@ -17,9 +17,9 @@ extern class BodyParser
 implements npm.Package.Require<"body-parser", "~1.10.1">
 implements js.npm.connect.Middleware
 {
-	public static function json(?options : Dynamic) : BodyParser;
-	public static function raw(?options : Dynamic) : BodyParser;
-	public static function text(?options : Dynamic) : BodyParser;
+	public static function json(?options : {}) : BodyParser;
+	public static function raw(?options : {}) : BodyParser;
+	public static function text(?options : {}) : BodyParser;
 	public static function urlencoded(?options : UrlencodedOptions) : BodyParser;
 
 	public inline static function body(req : ClientRequest) : Dynamic {

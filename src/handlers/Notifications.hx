@@ -10,9 +10,11 @@ import models.VacationInSeasonListener;
 class Notifications
 {
 	var db : Mongoose;
+	var logger : Logger;
 
 	public function new(db) {
 		this.db = db;
+		this.logger = Logger.instance;
 	}
 
 	public function notifyMe(req : Request, res : Response) {
@@ -30,7 +32,7 @@ class Notifications
 			{upsert: true},
 			function(err, listeners) {
 				if(err != null) {
-					Logger.instance.logError(err);
+					logger.error(err);
 					session.flash = {
 						type: 'danger',
 						intro: 'Ooops!',
