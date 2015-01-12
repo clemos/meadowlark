@@ -16,6 +16,7 @@ import js.npm.connect.ConnectRest;
 import js.npm.Express;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
+import js.npm.express.Cors;
 import js.npm.express.ErrorHandler;
 import js.npm.express.MongooseSession;
 import js.npm.express.Morgan;
@@ -235,6 +236,7 @@ class Meadowlark
 			if(worker != null) worker.disconnect();
 		});
 
+		app.use('/api', new Cors());
 		app.use(ConnectRest.rester(apiOptions));
 
 		// If you want to use the api subdomain:
