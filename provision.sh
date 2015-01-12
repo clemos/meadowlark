@@ -42,6 +42,7 @@ haxelib install HaxeContracts
 echo "=== Installing Node packages..."
 npm install --no-bin-links
 npm install -g forever
+npm install -g grunt-cli
 
 echo "=== Installation complete"
 

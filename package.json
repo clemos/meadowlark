@@ -24,10 +24,16 @@
     "vhost": "^3.0.0"
   },
   "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-less": "^1.0.0",
+    "grunt-exec": "^0.4.6",
+    "grunt-haxe": "^0.1.12",
+    "grunt-link-checker": "0.0.6",
+    "load-grunt-tasks": "^2.0.0",
     "loadtest": "^1.2.4",
     "morgan": "^1.5.1",
-    "punt": "^2.2.0",
     "restler": "^3.2.2",
+    "time-grunt": "^1.0.0",
     "zombie": "^2.5.1"
   }
 }

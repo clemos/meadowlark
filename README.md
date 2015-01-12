@@ -2,7 +2,7 @@
 
 Following along the project in [Web Development with Node and Express](http://shop.oreilly.com/product/0636920032977.do), but using Haxe as language instead of javascript. A work in progress that will evolve using Haxe solutions instead of Node packages. For example, it's using [Buddy](https://github.com/ciscoheat/buddy) for testing instead of mocha and chai.
 
-**Current progress:** Beginning of Chapter 16.
+**Current progress:** Middle of Chapter 16.
 
 ### Todo 
 
@@ -12,7 +12,7 @@ Following along the project in [Web Development with Node and Express](http://sh
 
 If you're using [Vagrant](http://vagrantup.com), run `vagrant up` and you're set.
 
-If not, make sure that Haxe, Node.js, Git and MongoDB is installed ([provision.sh](https://github.com/ciscoheat/meadowlark/blob/master/provision.sh) can be useful), then run `npm install`.
+If not, make sure that Haxe, Node.js, Grunt, Git, and MongoDB is installed ([provision.sh](https://github.com/ciscoheat/meadowlark/blob/master/provision.sh) can be useful), then run `npm install`.
 
 There are a few haxelib dependencies that will reveal themselves when you compile. But a special one is [js-kit](https://github.com/clemos/haxe-js-kit), a very nice Node.js library for Haxe available only from github. Install with `haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master`.
 

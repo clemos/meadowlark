@@ -172,6 +172,16 @@ class Meadowlark
 			next();
 		});		
 
+		///// Easter egg /////
+
+		app.use(function(req : Request, res : Response, next) {
+			var now = Date.now();
+			res.locals.logoImage = now.getMonth() == 11 && now.getDate() == 19
+				? lib.Static.map('/img/logo_bud_clark.jpg')
+				: lib.Static.map('/img/logo.png');
+			next();
+		});
+
 		///// Routes /////
 
 		var main = new Main();

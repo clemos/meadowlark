@@ -3,10 +3,11 @@
 <head>
 	<title>Meadowlark Travel</title>
 	<link rel="stylesheet" href="{{static '/vendor/bootstrap.min.css'}}">
+	<link rel="stylesheet" href="{{static '/css/main.css'}}">
 	{{{_sections.head}}}
 </head>
 <body>
-	<header><img src="{{static '/img/logo.png'}}" alt="Meadowlark Travel Logo"></header>
+	<header><img src="{{logoImage}}" alt="Meadowlark Travel Logo"></header>
 	{{#if flash}}
 		<div class="alert alert-dismissible alert-{{flash.type}}">
 			<button type="button" class="close"	data-dismiss="alert" aria-hidden="true">&times;</button>
@@ -25,4 +26,4 @@
 	{{#if pageTestScript}}<script src="{{pageTestScript}}"></script>{{/if}}
 	{{/if}}
 </body>
-</html>
+</html>	

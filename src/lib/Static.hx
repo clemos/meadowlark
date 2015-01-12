@@ -1,5 +1,6 @@
 package lib;
 
+@:expose('Static')
 class Static
 {
 	static var baseUrl = '';

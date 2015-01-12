@@ -4,8 +4,6 @@ import buddy.*;
 import js.html.InputElement;
 import js.Node;
 import js.npm.Loadtest;
-import js.npm.Mute;
-import js.npm.Punt;
 import js.npm.Restler;
 import js.npm.Zombie;
 using buddy.Should;
