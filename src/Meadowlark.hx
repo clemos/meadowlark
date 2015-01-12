@@ -1,6 +1,7 @@
 package;
 
 import handlers.*;
+import handlers.api.Attractions;
 import haxecontracts.ContractException;
 import js.Error;
 import js.Node;
@@ -36,7 +37,6 @@ class Meadowlark
 {
 	var server : Server;
 	var app : Express;
-	var db : Mongoose;
 	var mailer : Transporter;
 	var logger : Logger;
 
@@ -51,6 +51,7 @@ class Meadowlark
 	public function new() {
 		app = new Express();
 		logger = Logger.instance;
+		Database.connect(app);
 
 		var env = Node.process.env;
 
@@ -70,26 +71,6 @@ class Meadowlark
 		app.set('view engine', 'handlebars');
 
 		app.set('port', env.PORT != null ? env.PORT : 3000);
-
-		///// Database /////
-
-		var mongoose = js.npm.Mongoose.mongoose;
-		var dbOpts = {
-			server: {
-				socketOptions: { keepAlive: 1 }
-			}
-		};
-
-		switch(app.get('env')) {
-			case 'development':
-				db = mongoose.connect(Credentials.mongo.devolopment.connectionString, cast dbOpts);
-			case 'production':
-				db = mongoose.connect(Credentials.mongo.production.connectionString, cast dbOpts);
-			case _:
-				throw new Error('Unknown execution environment: ' + app.get('env'));
-		}
-
-		seedDatabase();
 
 		///// Mailer /////
 
@@ -152,6 +133,8 @@ class Meadowlark
 					if(cluster.isWorker) logger.log('Worker %d received request', cluster.worker.id);
 					next();
 				});
+
+				Database.seed();
 			case _:
 		}
 
@@ -163,7 +146,7 @@ class Meadowlark
 		app.use(new CookieParser(Credentials.cookieSecret));
 		app.use(new Session({
 			secret: Credentials.cookieSecret,
-			store: new MongooseSession(db),
+			store: new MongooseSession(Database.instance),
 			resave: false,
 			saveUninitialized: false
 		}));
@@ -192,14 +175,14 @@ class Meadowlark
 			next();
 		});		
 
-		// ========== Routes ==========
+		///// Routes /////
 
 		var main = new Main();
 
 		app.get('/', main.home);
 		app.get('/about', main.about);
 
-		var vacations = new Vacations(db);
+		var vacations = new Vacations();
 
 		app.get('/set-currency/:currency', vacations.setCurrency);
 		app.get('/vacations', vacations.vacations);
@@ -220,7 +203,7 @@ class Meadowlark
 
 		// Tour routes are handled by the static router.
 
-		var notifications = new Notifications(db);
+		var notifications = new Notifications();
 
 		app.get('/notify-me-when-in-season', notifications.notifyMe);
 		app.post('/notify-me-when-in-season', notifications.notifyMeSubmission);
@@ -229,6 +212,14 @@ class Meadowlark
 
 		app.get('/data/nursery-rhyme', test.nurseryRhyme);
 		app.get('/epic-fail', test.epicFail);
+
+		/// Rest API routes
+
+		var apiAttractions = new Attractions();
+
+		app.get('/api/attractions', apiAttractions.get);
+		app.post('/api/attraction', apiAttractions.post);
+		app.get('/api/attraction/:id', apiAttractions.getById);
 
 		///// Static routing /////
 
@@ -320,60 +311,6 @@ class Meadowlark
 			text: 'hello world!'
 		}, function(err) {
 			if(err) logger.error('Unable to send email: ' + err);
-		});
-	}
-
-	private function seedDatabase() {
-		var vacation = VacationManager.build(db, "Vacation");
-		var attraction = Attraction.build(db);
-
-		vacation.find(function(err, vacations) {
-			if(vacations.length > 0) return;
-
-			vacation.construct({
-				name: 'Hood River Day Trip',
-				slug: 'hood-river-day-trip',
-				category: 'Day Trip',
-				sku: 'HR199',
-				description: 'Spend a day sailing on the Columbia and ' +
-					'enjoying craft beers in Hood River!',
-				priceInCents: 9995,
-				tags: ['day trip', 'hood river', 'sailing', 'windsurfing', 'breweries'],
-				inSeason: true,
-				maximumGuests: 16,
-				available: true,
-				packagesSold: 0
-			}).save();
-
-			vacation.construct({
-				name: 'Oregon Coast Getaway',
-				slug: 'oregon-coast-getaway',
-				category: 'Weekend Getaway',
-				sku: 'OC39',
-				description: 'Enjoy the ocean air and quaint coastal towns!',
-				priceInCents: 269995,
-				tags: ['weekend getaway', 'oregon coast', 'beachcombing'],
-				inSeason: false,
-				maximumGuests: 8,
-				available: true,
-				packagesSold: 0
-			}).save();
-
-			vacation.construct({
-				name: 'Rock Climbing in Bend',
-				slug: 'rock-climbing-in-bend',
-				category: 'Adventure',
-				sku: 'B99',
-				description: 'Experience the thrill of climbing in the high desert.',
-				priceInCents: 289995,
-				tags: ['weekend getaway', 'bend', 'high desert', 'rock climbing'],
-				inSeason: true,
-				requiresWaiver: true,
-				maximumGuests: 4,
-				available: false,
-				packagesSold: 0,
-				notes: 'The tour guide is currently recovering from a skiing accident.'
-			}).save();
 		});
 	}
 }

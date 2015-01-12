@@ -69,8 +69,8 @@ class CrossPage extends BuddySuite
 class StressTest extends BuddySuite
 {
 	public function new() {
-		// For stress testing, we need to shut down console logs.
-		describe("Stress tests", {
+		// For stress testing, we need to shut down console logs, so excluding this test for now.
+		@exclude describe("Stress tests", {
 			describe("The Homepage", {
 				it("should handle 100 requests per second", function(done) {
 					var options = {
@@ -94,6 +94,8 @@ class APITests extends BuddySuite
 {
 	public function new() {
 		describe("API tests", {
+			this.timeoutMs = 500;
+
 			var attraction = {
 				lat: 45.516011,
 				lng: -122.682062,
@@ -108,6 +110,7 @@ class APITests extends BuddySuite
 
 			it("should be able to add an attraction", function(done) {
 				Restler.post(base + '/api/attraction', {data: attraction})
+				.on('error', fail)
 				.on('success', function(data) {
 					var id : String = data.id;
 					id.should.match(~/\w/);
@@ -117,8 +120,10 @@ class APITests extends BuddySuite
 
 			it('should be able to retrieve an attraction', function(done) {
 				Restler.post(base + '/api/attraction', {data:attraction})
+				.on('error', fail)
 				.on('success', function(data) {
 					Restler.get(base + '/api/attraction/' + data.id)
+					.on('error', fail)
 					.on('success', function(data) {
 						attraction.name.should.be(data.name);
 						attraction.description.should.be(data.description);

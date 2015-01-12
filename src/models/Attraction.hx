@@ -9,20 +9,19 @@ typedef AttractionSchema = {
 	location: { lat: Float, lng: Float },
 	history: {
 		event: String,
-		notes: String,
+		?notes: String,
 		email: String,
 		date: Date,
 	},
-	updateId: String,
+	?updateId: String,
 	approved: Bool
 }
 
-class AttractionManager extends Manager<AttractionSchema, Attraction>
-{}
+class AttractionManager extends Manager<AttractionSchema, Attraction> {}
 
 class Attraction extends Model<AttractionSchema>
 {
-	public static function build(mongoose) {
-		return AttractionManager.build(mongoose, "Attraction"); 
+	public static function build() {
+		return AttractionManager.build(Database.instance, "Attraction"); 
 	}
 }

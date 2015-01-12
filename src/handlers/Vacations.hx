@@ -10,8 +10,8 @@ class Vacations
 {
 	var db : Mongoose;
 
-	public function new(db) {
-		this.db = db;
+	public function new() {
+		this.db = Database.instance;
 	}
 
 	public function setCurrency(req : Request, res : Response) {
@@ -21,7 +21,7 @@ class Vacations
 	}
 
 	public function vacations(req : Request, res : Response) {
-		var vacation = Vacation.build(db);
+		var vacation = Vacation.build();
 		var session = Session.session(req);
 
 		var convertFromUSD = function(value : Float, currency) {

@@ -12,8 +12,8 @@ class Notifications
 	var db : Mongoose;
 	var logger : Logger;
 
-	public function new(db) {
-		this.db = db;
+	public function new() {
+		this.db = Database.instance;
 		this.logger = Logger.instance;
 	}
 
@@ -22,7 +22,7 @@ class Notifications
 	}
 
 	public function notifyMeSubmission(req : Request, res : Response) {
-		var listeners = VacationInSeasonListener.build(db);
+		var listeners = VacationInSeasonListener.build();
 		var session = Session.session(req);
 		var form = BodyParser.body(req);
 

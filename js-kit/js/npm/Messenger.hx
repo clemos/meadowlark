@@ -1,3 +1,5 @@
+
+// TODO: Classes needs to be moved into their own package so they don't pollute js.npm.
 package js.npm;
 
 typedef MessageCallback = Message -> Dynamic -> Void;

@@ -13,5 +13,7 @@ class VacationInSeasonListenerManager extends Manager<VacationInSeasonListenerSc
 
 class VacationInSeasonListener extends Model<VacationInSeasonListenerSchema>
 {
-    public static function build(mongoose) { return VacationInSeasonListenerManager.build(mongoose, "VacationInSeasonListener"); }
+    public static function build() { 
+    	return VacationInSeasonListenerManager.build(Database.instance, "VacationInSeasonListener"); 
+    }
 }
