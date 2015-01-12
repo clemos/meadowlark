@@ -1,10 +1,8 @@
 package;
 
 import handlers.*;
-import handlers.api.Attractions;
+import handlers.api.*;
 import haxe.Timer;
-import haxecontracts.ContractException;
-import js.Error;
 import js.Node;
 import js.node.Cluster;
 import js.node.Domain;
@@ -14,6 +12,7 @@ import js.node.Process;
 import js.node.stdio.Console;
 import js.npm.connect.ConnectRest;
 import js.npm.Express;
+import js.npm.ExpressHandlebars;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
 import js.npm.express.Cors;
@@ -21,22 +20,12 @@ import js.npm.express.ErrorHandler;
 import js.npm.express.MongooseSession;
 import js.npm.express.Morgan;
 import js.npm.express.Session;
-import js.npm.ExpressHandlebars;
 import js.npm.express.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Static;
-import js.npm.Formidable;
-import js.npm.formidable.IncomingForm;
-import js.npm.mongoose.Mongoose;
-import js.npm.Mute;
 import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
-import js.npm.Punt;
-import models.Vacation;
-import models.Vacation.VacationManager;
-import models.VacationInSeasonListener;
-import models.Attraction;
 
 class Meadowlark
 {
@@ -68,6 +57,9 @@ class Meadowlark
 					if(self._sections == null) self._sections = {};
 					Reflect.setField(self._sections, name, options.fn(self));
 					return null;
+				},
+				"static": function(name) {
+					return lib.Static.map(name);
 				}
 			}
 		});
@@ -323,22 +315,5 @@ class Meadowlark
 				},
 			],
 		};
-	}
-
-	private function mailExample() {
-		Nodemailer.createTransport({
-			service: 'gmail',
-			auth: {
-				user: Credentials.gmail.user,
-				pass: Credentials.gmail.password
-			}
-		}).sendMail({
-			from: "someone@example.com",
-			to: 'receiver@address',
-			subject: 'hello',
-			text: 'hello world!'
-		}, function(err) {
-			if(err) logger.error('Unable to send email: ' + err);
-		});
 	}
 }
