@@ -2,13 +2,17 @@ package;
 
 import handlers.*;
 import handlers.api.Attractions;
+import haxe.Timer;
 import haxecontracts.ContractException;
 import js.Error;
 import js.Node;
+import js.node.Cluster;
+import js.node.Domain;
 import js.node.Fs;
 import js.node.http.Server;
 import js.node.Process;
 import js.node.stdio.Console;
+import js.npm.connect.ConnectRest;
 import js.npm.Express;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
@@ -215,11 +219,33 @@ class Meadowlark
 
 		/// Rest API routes
 
+		var apiOptions = {
+			context: '/api',
+			domain: Domain.create()
+		};
+
+		apiOptions.domain.on('error', function(err) {
+			logger.error(err);
+			Timer.delay(function() {
+				logger.log('Server shutting down after API domain error.');
+				Node.process.exit(1);
+			}, 5000);
+			server.close();
+			var worker = Cluster.cluster.worker;
+			if(worker != null) worker.disconnect();
+		});
+
+		app.use(ConnectRest.rester(apiOptions));
+
+		// If you want to use the api subdomain:
+		//app.use(new VHost('api.*', ConnectRest.rester(apiOptions)));
+
 		var apiAttractions = new Attractions();
 
-		app.get('/api/attractions', apiAttractions.get);
-		app.post('/api/attraction', apiAttractions.post);
-		app.get('/api/attraction/:id', apiAttractions.getById);
+		// Cannot use a function reference directly for ConnectRest!
+		ConnectRest.get('/attractions', function(r,c,cb) apiAttractions.get(r,c,cb));
+		ConnectRest.get('/attraction/:id', function(r,c,cb) apiAttractions.getById(r,c,cb));
+		ConnectRest.post('/attraction', function(r,c,cb) apiAttractions.post(r,c,cb));
 
 		///// Static routing /////
 

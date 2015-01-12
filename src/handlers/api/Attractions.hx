@@ -1,8 +1,7 @@
 package handlers.api;
 
+import js.npm.connect.ConnectRest.ConnectRestCallback;
 import js.npm.express.BodyParser;
-import js.npm.express.Request;
-import js.npm.express.Response;
 import models.Attraction;
 import models.Attraction.AttractionManager;
 
@@ -14,33 +13,30 @@ class Attractions
 		attractions = Attraction.build();
 	}
 
-	public function get(req : Request, res : Response) {
+	public function get(req, content, cb : ConnectRestCallback) {
 		attractions.find({approved: true}, function(err, attractions) {
-			if(err != null) return res.send(500, "Error: Database error.");
-			res.json(attractions.map(function(a) return {
+			if(err != null) return cb({error: "Internal error."});
+
+			cb(null, attractions.map(function(a) return {
 				name: a.name,
-				id: a._id,
+				//id: a._id,
 				description: a.description,
 				location: a.location
 			}));
 		});
 	}
 
-	public function getById(req : Request, res : Response) {
+	public function getById(req, content, cb : ConnectRestCallback) {
 		attractions.findById(req.params.id, function(err, a) {
-			if(err != null) return res.send(500, "Error: Database error.");
-			res.json({
-				name: a.name,
-				id: a._id,
-				description: a.description,
-				location: a.location
-			});
+			if(err != null) return cb({error: "Unable to retrieve attraction."});
+
+			cb(null, toJSON(cast a));
 		});
 	}
 
-	public function post(req : Request, res : Response) {
+	public function post(req, content, cb : ConnectRestCallback) {
 		var body = BodyParser.body(req);
-		var d = Date.now();
+		var d = Date.now(); // Cannot put directly in the call to construct. See https://github.com/clemos/haxe-js-kit/issues/25
 
 		attractions.construct({
 			name: body.name,
@@ -52,9 +48,19 @@ class Attractions
 				date: d
 			},
 			approved: false
-		}).save(function(err, a){
-			if(err != null) return res.send(500, 'Error occurred: database error.');
-			res.json({ id: a._id });
+		}).save(function(err, a) {
+			Logger.instance.log(cb);
+			if(err != null) return cb({error: 'Unable to add attraction.'});
+			cb(null, { id: a._id });
 		});
+	}
+
+	private static function toJSON(a : Attraction) {
+		return {
+			name: a.name,
+			//id: a._id,
+			description: a.description,
+			location: a.location
+		};
 	}
 }
