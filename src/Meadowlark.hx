@@ -13,6 +13,7 @@ import js.node.stdio.Console;
 import js.npm.connect.ConnectBundle;
 import js.npm.connect.ConnectRest;
 import js.npm.Express;
+import js.npm.express.Csurf;
 import js.npm.ExpressHandlebars;
 import js.npm.express.Compression;
 import js.npm.express.CookieParser;
@@ -71,6 +72,9 @@ class Meadowlark
 		app.set('view engine', 'handlebars');
 
 		app.set('port', env.PORT != null ? env.PORT : 3000);
+		#if ssl
+		app.set('sslPort', env.SSLPORT != null ? env.SSLPORT : 3001);
+		#end
 
 		///// Mailer /////
 
@@ -145,6 +149,7 @@ class Meadowlark
 		app.use(new Static(Node.__dirname + '/public'));
 		app.use(BodyParser.urlencoded({extended: true}));
 		app.use(new CookieParser(Credentials.cookieSecret));
+
 		app.use(new Session({
 			secret: Credentials.cookieSecret,
 			store: new MongooseSession(Database.instance),
@@ -186,7 +191,39 @@ class Meadowlark
 			next();
 		});
 
-		///// Routes /////
+		///// Rest API routes /////
+
+		var apiOptions = {
+			context: '/api',
+			domain: Domain.create()
+		};
+
+		apiOptions.domain.on('error', function(err) {
+			logger.error(err);
+			Timer.delay(function() {
+				logger.log('Server shutting down after API domain error.');
+				Node.process.exit(1);
+			}, 5000);
+			server.close();
+			var worker = Cluster.cluster.worker;
+			if(worker != null) worker.disconnect();
+		});
+
+		app.use('/api', new Cors());
+		app.use(ConnectRest.rester(apiOptions));
+
+		// If you want to use the api subdomain:
+		//app.use(new VHost('api.*', ConnectRest.rester(apiOptions)));
+
+		/// After Rest API, use csurf ///
+
+		app.use(new Csurf());
+		app.use(function(req : Request, res : Response, next) {
+			res.locals._csrfToken = Csurf.csrfToken(req);
+			next();
+		});
+
+		///// Site routes /////
 
 		var main = new Main();
 
@@ -223,30 +260,6 @@ class Meadowlark
 
 		app.get('/data/nursery-rhyme', test.nurseryRhyme);
 		app.get('/epic-fail', test.epicFail);
-
-		/// Rest API routes
-
-		var apiOptions = {
-			context: '/api',
-			domain: Domain.create()
-		};
-
-		apiOptions.domain.on('error', function(err) {
-			logger.error(err);
-			Timer.delay(function() {
-				logger.log('Server shutting down after API domain error.');
-				Node.process.exit(1);
-			}, 5000);
-			server.close();
-			var worker = Cluster.cluster.worker;
-			if(worker != null) worker.disconnect();
-		});
-
-		app.use('/api', new Cors());
-		app.use(ConnectRest.rester(apiOptions));
-
-		// If you want to use the api subdomain:
-		//app.use(new VHost('api.*', ConnectRest.rester(apiOptions)));
 
 		var apiAttractions = new Attractions();
 
@@ -285,22 +298,40 @@ class Meadowlark
 		});
 
 		app.use(function(err, req : js.npm.express.Request, res : js.npm.express.Response, next) {
-			logger.error(err);
-			res.status(500);
-			res.render('500');
+			if (err.code == Csurf.errorCode) {
+				res.status(403);
+				res.send('Session has expired or form tampered with.');
+			} else {				
+				logger.error(err);
+				res.status(500);
+				res.render('500');
+			}
 		});
 	}
 
-	public function start() : Server {
-		server = js.node.Http.createServer(app);
-		server.listen(app.get("port"), function() {
+	public function start() {
+		js.node.Http.createServer(app)
+		.listen(app.get("port"), function() {
 			logger.log('Express started in ' + 
 				app.get("env") + ' mode on http://localhost:' + 
 				app.get("port") + '; Ctrl+C to terminate.'
 			);
 		});
 
-		return server;
+		#if ssl
+		var options = {
+			key: Fs.readFileSync(Node.__dirname + '/ssl/localhost.key'),
+			cert: Fs.readFileSync(Node.__dirname + '/ssl/localhost.cert')
+		};
+
+		js.node.Https.createServer(options, cast app)
+		.listen(app.get("sslPort"), function() {
+			logger.log('Express started in ' + 
+				app.get("env") + ' mode on https://localhost:' + 
+				app.get("sslPort") + '; Ctrl+C to terminate.'
+			);
+		});
+		#end
 	}
 
 	private static function getWeatherData() {

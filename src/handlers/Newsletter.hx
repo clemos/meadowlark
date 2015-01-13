@@ -14,9 +14,7 @@ class Newsletter
 	}
 
 	public function newsletter(req : Request, res : Response) {
-		// we will learn about CSRF later...for now, we just
-		// provide a dummy value
-		res.render('newsletter', { csrf: 'CSRF token goes here' });
+		res.render('newsletter');
 	}
 
 	public function process(req : Request, res : Response) {
