@@ -3,10 +3,18 @@
 <head>
 	<title>Meadowlark Travel</title>
 	<link rel="stylesheet" href="{{static '/vendor/bootstrap.min.css'}}">
-	<link rel="stylesheet" href="{{static '/css/meadowlark.min.631cdaf7.css'}}">
+	{{#each _bundles.css}}
+		<link rel="stylesheet" href="{{static .}}">
+	{{/each}}
+	{{#each _bundles.js.head}}
+		<script src="{{static .}}"></script>
+	{{/each}}
 	{{{_sections.head}}}
 </head>
 <body>
+	{{#each _bundles.js.afterBodyOpen}}
+		<script src="{{static .}}"></script>
+	{{/each}}
 	<header><img src="{{logoImage}}" alt="Meadowlark Travel Logo"></header>
 	{{#if flash}}
 		<div class="alert alert-dismissible alert-{{flash.type}}">
@@ -19,7 +27,9 @@
 
 	<script src="{{static '/vendor/jquery-2.1.1.min.js'}}"></script>
 	<script src="{{static '/vendor/bootstrap.min.js'}}"></script>
-	<script src="{{static '/js/meadowlark.min.f5206890.js'}}"></script>
+	{{#each _bundles.js.beforeBodyClose}}
+		<script src="{{static .}}"></script>
+	{{/each}}
 	{{{_sections.jquery}}}
 	
 	{{#if showTests}}

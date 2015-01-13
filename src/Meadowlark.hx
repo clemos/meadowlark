@@ -10,6 +10,7 @@ import js.node.Fs;
 import js.node.http.Server;
 import js.node.Process;
 import js.node.stdio.Console;
+import js.npm.connect.ConnectBundle;
 import js.npm.connect.ConnectRest;
 import js.npm.Express;
 import js.npm.ExpressHandlebars;
@@ -26,6 +27,7 @@ import js.npm.express.Response;
 import js.npm.express.Static;
 import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
+import lib.Bundles;
 
 class Meadowlark
 {
@@ -138,6 +140,7 @@ class Meadowlark
 
 		///// Files and Parsers /////
 
+		app.use(new ConnectBundle(Bundles.connectBundleOptions));
 		app.use(new Compression());
 		app.use(new Static(Node.__dirname + '/public'));
 		app.use(BodyParser.urlencoded({extended: true}));

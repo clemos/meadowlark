@@ -58,7 +58,7 @@ module.exports = (g) ->
 					'www/public/css/meadowlark.min.css'
 				]
 				dest: [
-					'www/views/layouts/main.handlebars'
+					'www/meadowlark.js'
 				]
 
 	task 'default', ['haxe', 'static', 'tests']
