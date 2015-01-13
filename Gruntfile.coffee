@@ -1,8 +1,8 @@
 module.exports = (g) -> 
-	['time-grunt', 'load-grunt-tasks'].forEach (t) -> require(t) g
+	require(plugin) g for plugin in ['time-grunt', 'load-grunt-tasks']
 	task = g.registerTask
 
-	@initConfig
+	g.initConfig
 		haxe:
 			development:
 				hxml: 'meadowlark-all.hxml'
@@ -27,6 +27,7 @@ module.exports = (g) ->
 					customFunctions:
 						static: (lessObject, name) ->
 							'url("' + require('./www/meadowlark.js').Static.map(name.value) + '")'
+
 
 	task 'default', ['haxe', 'less', 'exec', 'link-checker']
 	task 'build', ['haxe', 'less']
