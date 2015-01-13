@@ -1,5 +1,7 @@
 meadowlark.hxml
 --next
+meadowlark-client.hxml
+--next
 meadowlark-tests.hxml
 --next
 meadowlark-client-tests.hxml

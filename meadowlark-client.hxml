@@ -1,0 +1,10 @@
+-lib jQueryExtern
+-cp src
+
+--each
+-js www/public/js/contact.js
+-main clientjs.Contact
+
+--next
+-js www/public/js/cart.js
+-main clientjs.Cart

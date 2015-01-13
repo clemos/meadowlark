@@ -35,6 +35,7 @@ class Meadowlark
 	var logger : Logger;
 
 	public static function main() {
+		if(Node.process.env.NO_SERVER != null) return;
 		#if cluster
 		new MeadowlarkCluster().start();
 		#else

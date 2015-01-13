@@ -63,7 +63,7 @@ module.exports = (g) ->
   task 'default', ['less']
 ```
 
-That's it! A final note, if you're using Vagrant you may get problems with symlinks when installing npm packages (though [this](http://xiankai.wordpress.com/2013/12/26/symlinks-with-vagrant-virtualbox/) may help). Then use `--no-bin-links`, so installing a package may finally look like this:
+That's it! A final note, if you're using Vagrant on Windows you may get problems with symlinks when installing npm packages (though [this](http://xiankai.wordpress.com/2013/12/26/symlinks-with-vagrant-virtualbox/) may help, or starting Vagrant as an Administrator). Then use `--no-bin-links`, so installing a package may finally look like this:
 
 `sudo npm install --no-bin-links --save-dev grunt-contrib-less`
 
