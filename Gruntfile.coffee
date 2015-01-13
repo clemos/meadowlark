@@ -17,7 +17,7 @@ module.exports = (g) ->
 					initialPort: 3000
 					callback: (crawler) ->
 						crawler.addFetchCondition (url) ->
-							not url.path.match /\/jquery.+\.js$/
+							not url.path.match /\bjquery.+?\.js\b/
 
 		exec:
 			tests:
@@ -61,6 +61,32 @@ module.exports = (g) ->
 					'www/meadowlark.js'
 				]
 
+		lint_pattern:
+			view_statics:
+				options:
+					rules: [
+						pattern: /<link [^>]*href=["'](?!\{\{static )/
+						message: 'Un-mapped static resource found in <link>.'
+					,
+						pattern: /<script [^>]*src=["'](?!\{\{static )/
+						message: 'Un-mapped static resource found in <script>.'
+					,
+						pattern: /<img [^>]*src=["'](?!\{\{static )/
+						message: 'Un-mapped static resource found in <img>.'
+					]
+				files:
+					src: [ 'views/**/*.handlebars' ]
+
+			css_statics:
+				options:
+					rules: [
+						pattern: /url\(/
+						message: 'Un-mapped static found in LESS property.'
+					]
+
+				files:
+					src: [ 'less/**/*.less' ]
+
 	task 'default', ['haxe', 'static', 'tests']
-	task 'static', ['less', 'cssmin', 'uglify', 'hashres']
+	task 'static', ['lint_pattern', 'less', 'cssmin', 'uglify', 'hashres']
 	task 'tests',   ['exec', 'link-checker']
