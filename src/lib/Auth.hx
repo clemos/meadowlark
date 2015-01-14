@@ -77,7 +77,7 @@ class Auth
 	public function registerRoutes() {
 		app.get('/auth/facebook', function(req : Request, res : Response, next) {
 			var middleware : Request->Response->MiddlewareNext->Void = cast Passport.authenticate('facebook', cast {
-				callbackURL: '/auth/facebook/callback?redirect=' + StringTools.urlEncode(req.query.redirect)
+				callbackURL: '/auth/facebook/callback' //?redirect=' + StringTools.urlEncode(req.query.redirect)
 			});
 
 			middleware(req, res, next);
@@ -85,8 +85,8 @@ class Auth
 
 		app.get('/auth/facebook/callback', Passport.authenticate('facebook', {
 			failureRedirect: options.failureRedirect
-		}, function(req : Request, res : Response, next) {
+		}), function(req : Request, res : Response) {
 			res.redirect(303, req.query.redirect == null ? options.successRedirect : req.query.redirect);
-		}));
+		});
 	}
 }

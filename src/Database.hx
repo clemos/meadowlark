@@ -21,9 +21,9 @@ class Database
 
 		switch(app.get('env')) {
 			case 'development':
-				instance = mongoose.connect(Credentials.mongo.devolopment.connectionString, cast options);
+				instance = mongoose.connect(Credentials.instance.mongo.development.connectionString, cast options);
 			case 'production':
-				instance = mongoose.connect(Credentials.mongo.production.connectionString, cast options);
+				instance = mongoose.connect(Credentials.instance.mongo.production.connectionString, cast options);
 			case _:
 				throw new js.Error('Unknown execution environment: ' + app.get('env'));
 		}

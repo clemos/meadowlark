@@ -1,28 +1,47 @@
 package ;
 
+import js.Node;
+
 class Credentials
 {
-	public static var cookieSecret = "your cookie secret goes here";
-	
-	public static var gmail = {
-		user: "Gmail username", 
-		password: "Gmail password"
-	};
+	public static var instance(default, null) : Credentials;
 
-	public static var mongo = {
-		devolopment: {
-			connectionString: 'mongodb://localhost/meadowlark'
-		},
-		production: {
-			connectionString: 'mongodb://localhost/meadowlark'
-		},		
+	public static function create(env) {
+		instance = new Credentials(env);
 	}
 
-	public static var authProviders = {
-		facebook: {
+	var env : Dynamic;
+
+	public var cookieSecret : String;
+	public var gmail : Dynamic;
+	public var mongo : Dynamic;
+	public var authProviders : Dynamic;
+
+	private function new(env) {
+		this.env = env;
+
+		this.cookieSecret = "your cookie secret goes here";
+
+		this.gmail = {
+			user: env.GMAIL_USER, 
+			password: env.GMAIL_PASSWORD
+		};
+
+		this.mongo = {
 			development: {
-				appId: 'https://developers.facebook.com/apps/',
-				appSecret: 'https://developers.facebook.com/apps/'
+				connectionString: 'mongodb://localhost/meadowlark'
+			},
+			production: {
+				connectionString: 'mongodb://localhost/meadowlark'
+			}
+		}
+
+		this.authProviders = {
+			facebook: {
+				development: {
+					appId: env.FB_APPID,
+					appSecret: env.FB_APPSECRET
+				}
 			}
 		}
 	}

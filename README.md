@@ -24,6 +24,19 @@ If you're using Vagrant on Windows you may get problems with symlinks when insta
 
 Compile with `haxe meadowlark.hxml`, then go to the `www` directory and run with `node meadowlark.js` or `forever -w meadowlark.js`. Then browse to `http://localhost:3000` and it *should* work.
 
+## Authentication
+
+No login data for authentication are saved in the project for security reasons, so to use your Gmail and Facebook information, create `www/.env` with the following content:
+
+```
+FB_APPID=
+FB_APPSECRET=
+GMAIL_USER=
+GMAIL_PASSWORD=
+```
+
+Fill in the blanks, and they will be imported to process.env with the help of [node-env-file](https://www.npmjs.com/package/node-env-file).
+
 ## Tests
 
 The in-browser tests can be run by appending `?test=1` to any page url, for example `http://localhost:3000/about?test=1`. The cross-page tests are executed with the headless browser [Zombie.js](http://zombie.labnotes.org/) and is run from command-line: `node www/qa/tests-crosspage.js` (of course the server has to be running as well.) Or even easier, use `grunt tests`.

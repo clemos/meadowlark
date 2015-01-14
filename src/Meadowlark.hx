@@ -26,6 +26,7 @@ import js.npm.express.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Static;
+import js.npm.NodeEnvFile;
 import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
 import lib.Auth;
@@ -48,11 +49,16 @@ class Meadowlark
 	}
 
 	public function new() {
+		try {
+			new NodeEnvFile(Node.__dirname + '/.env');
+		} catch(e : js.Error) {}
+
+		Credentials.create(Node.process.env);
+		
 		app = new Express();
 		logger = Logger.instance;
-		Database.connect(app);
 
-		var env = Node.process.env;
+		Database.connect(app);
 
 		var handlebars = ExpressHandlebars.create({
 			defaultLayout: 'main',
@@ -72,9 +78,9 @@ class Meadowlark
 		app.engine('handlebars', handlebars.engine);
 		app.set('view engine', 'handlebars');
 
-		app.set('port', env.PORT != null ? env.PORT : 3000);
+		app.set('port', Node.process.env.PORT != null ? Node.process.env.PORT : 3000);
 		#if ssl
-		app.set('sslPort', env.SSLPORT != null ? env.SSLPORT : 3001);
+		app.set('sslPort', Node.process.env.SSLPORT != null ? Node.process.env.SSLPORT : 3001);
 		#end
 
 		///// Mailer /////
@@ -82,8 +88,8 @@ class Meadowlark
 		mailer = Nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
-				user: Credentials.gmail.user,
-				pass: Credentials.gmail.password
+				user: Credentials.instance.gmail.user,
+				pass: Credentials.instance.gmail.password
 			}
 		});
 
@@ -149,10 +155,10 @@ class Meadowlark
 		app.use(new Compression());
 		app.use(new Static(Node.__dirname + '/public'));
 		app.use(BodyParser.urlencoded({extended: true}));
-		app.use(new CookieParser(Credentials.cookieSecret));
+		app.use(new CookieParser(Credentials.instance.cookieSecret));
 
 		app.use(new Session({
-			secret: Credentials.cookieSecret,
+			secret: Credentials.instance.cookieSecret,
 			store: new MongooseSession(Database.instance),
 			resave: false,
 			saveUninitialized: false
@@ -161,10 +167,12 @@ class Meadowlark
 		///// Authentication /////
 
 		var auth = new Auth(app, {
-			providers: Credentials.authProviders,
-			successRedirect: '/account',
+			providers: Credentials.instance.authProviders,
+			successRedirect: '/user/account',
 			failureRedirect: '/unauthorized'
 		});
+		auth.init();
+		auth.registerRoutes();
 
 		///// Tests /////
 
@@ -218,11 +226,18 @@ class Meadowlark
 			if(worker != null) worker.disconnect();
 		});
 
+		// If you want to use the api subdomain:
+		//app.use(new VHost('api.*', ConnectRest.rester(apiOptions)));
+
 		app.use('/api', new Cors());
 		app.use(ConnectRest.rester(apiOptions));
 
-		// If you want to use the api subdomain:
-		//app.use(new VHost('api.*', ConnectRest.rester(apiOptions)));
+		var apiAttractions = new Attractions();
+
+		// Cannot use a function reference directly for ConnectRest!
+		ConnectRest.get('/attractions', function(r,c,cb) apiAttractions.get(r,c,cb));
+		ConnectRest.get('/attraction/:id', function(r,c,cb) apiAttractions.getById(r,c,cb));
+		ConnectRest.post('/attraction', function(r,c,cb) apiAttractions.post(r,c,cb));
 
 		/// After Rest API, use csurf ///
 
@@ -270,12 +285,13 @@ class Meadowlark
 		app.get('/data/nursery-rhyme', test.nurseryRhyme);
 		app.get('/epic-fail', test.epicFail);
 
-		var apiAttractions = new Attractions();
+		var user = new handlers.User();
 
-		// Cannot use a function reference directly for ConnectRest!
-		ConnectRest.get('/attractions', function(r,c,cb) apiAttractions.get(r,c,cb));
-		ConnectRest.get('/attraction/:id', function(r,c,cb) apiAttractions.getById(r,c,cb));
-		ConnectRest.post('/attraction', function(r,c,cb) apiAttractions.post(r,c,cb));
+		app.get('/account', user.customerOnly, user.account);
+		app.get('/account/order-history', user.customerOnly, user.orderHistory);
+		app.get('/account/email-prefs', user.customerOnly, user.emailPrefs);
+
+		app.get('/sales', user.employeeOnly, user.sales);
 
 		///// Static routing /////
 
