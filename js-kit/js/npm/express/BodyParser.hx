@@ -1,8 +1,6 @@
 package js.npm.express;
 
 import js.node.Buffer;
-import js.node.http.ClientRequest;
-import js.node.http.ServerResponse;
 
 typedef UrlencodedOptions = {
 	extended : Bool,
@@ -10,19 +8,19 @@ typedef UrlencodedOptions = {
 	?limit : Int,
 	?parameterLimit : Int,
 	?type : String,
-	?verify : ClientRequest -> ServerResponse -> Buffer -> String -> Void
+	?verify : Request -> Response -> Buffer -> String -> Void
 }
 
 extern class BodyParser
 implements npm.Package.Require<"body-parser", "~1.10.1">
-implements js.npm.connect.Middleware
+implements Middleware.IMiddleware<Request, Response>
 {
 	public static function json(?options : {}) : BodyParser;
 	public static function raw(?options : {}) : BodyParser;
 	public static function text(?options : {}) : BodyParser;
 	public static function urlencoded(?options : UrlencodedOptions) : BodyParser;
 
-	public inline static function body(req : ClientRequest) : Dynamic {
+	public inline static function body(req : Request) : Dynamic {
 		return untyped req.body;
 	}
 }

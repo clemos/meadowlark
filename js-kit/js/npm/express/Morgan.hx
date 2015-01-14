@@ -1,12 +1,10 @@
 package js.npm.express;
 
-import js.node.http.ClientRequest;
-import js.node.http.ServerResponse;
 import js.node.stream.Writable;
 
 typedef MorganOptions = {
 	?immediate : Bool,
-	?skip : ClientRequest -> ServerResponse -> Bool,
+	?skip : Request -> Response -> Bool,
 	?stream : IWritable,
 }
 
@@ -20,9 +18,8 @@ typedef MorganOptions = {
 
 extern class Morgan
 implements npm.Package.Require<"morgan", "~1.5.1">
-implements js.npm.connect.Middleware
+implements Middleware.IMiddleware<Request, Response>
 {
 	public function new(format : MorganFormat, ?options : MorganOptions) : Void;
-	public static function token(type : String, callback : ClientRequest -> ServerResponse -> String) : Void;
+	public static function token(type : String, callback : Request -> Response -> String) : Void;
 }
-// 

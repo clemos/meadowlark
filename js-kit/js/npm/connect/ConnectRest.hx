@@ -1,6 +1,9 @@
 package js.npm.connect;
 
-import js.npm.connect.Middleware;
+import js.npm.express.Middleware;
+import js.npm.express.Request;
+import js.npm.express.Response;
+
 import js.npm.nodemailer.Transport;
 import js.npm.nodemailer.Transporter;
 
@@ -19,7 +22,7 @@ typedef ConnectRestResult2<T> = T -> Dynamic -> ConnectRestCallback -> Void;
 extern class ConnectRest
 implements npm.Package.Require<"connect-rest", "~1.6.0">
 {
-	public static function rester(?options : {}) : Middleware;
+	public static function rester(?options : {}) : Middleware<Request, Response>;
 
 	@:overload(function<T>(path : Dynamic, cb : T -> Void) : Void {})
 	@:overload(function<T>(path : Dynamic, cb : ConnectRestResult<T>) : Void {})
