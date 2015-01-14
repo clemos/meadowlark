@@ -1,9 +1,7 @@
 package js.npm.express;
 
-import js.node.http.ClientRequest;
-
 typedef CsurfOptions = {
-	?value : ClientRequest -> String,
+	?value : Request -> String,
 	?cookie : Bool,
 	?ignoreMethods : Array<String>
 }
@@ -20,7 +18,7 @@ implements Middleware.IMiddleware<Request, Response>
 
 	public function new(?options : CsurfOptions) : Void;
 
-	public inline static function csrfToken(req : ClientRequest) : String {
+	public inline static function csrfToken(req : Request) : String {
 		return untyped req.csrfToken();
 	}
 }
