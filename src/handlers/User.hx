@@ -4,25 +4,26 @@ import js.npm.connect.support.Middleware.MiddlewareNext;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Session;
+import js.npm.Passport;
 
 class User
 {
 	public function new() {}
 
 	public function customerOnly(req : Request, res : Response, next : MiddlewareNext) {
-		var user = Session.session(req).passport.user;
+		var user = Passport.user(req);
 		if(user != null && user.role == 'customer') next();
 		else res.redirect(303, '/unauthorized');
 	}
 
 	public function employeeOnly(req : Request, res : Response, next : MiddlewareNext) {
-		var user = Session.session(req).passport.user;
+		var user = Passport.user(req);
 		if(user != null && user.role == 'employee') next();
 		else next('route');
 	}
 
 	public function account(req : Request, res : Response, next : MiddlewareNext) {
-		var user = Session.session(req).passport.user;
+		var user = Passport.user(req);
 		res.render('user/account', {user: user});
 	}
 

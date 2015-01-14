@@ -31,8 +31,15 @@ class Auth
 
 		if(options.failureRedirect == null)
 			options.failureRedirect = '/login';
+	}
 
-		Passport.serializeUser(function(user, done) done(null, user._id));
+	public function init() {
+		var env = app.get('env');
+		var config = options.providers;
+
+		Passport.serializeUser(function(user, done) {
+			done(null, user._id);
+		});
 
 		Passport.deserializeUser(function(id, done) {
 			users.findById(id, function(err, user) {
@@ -40,11 +47,6 @@ class Auth
 				done(null, user);
 			});
 		});
-	}
-
-	public function init() {
-		var env = app.get('env');
-		var config = options.providers;
 
 		Passport.use(new FacebookStrategy({
 			clientID: Reflect.field(config.facebook, env).appId,
@@ -57,15 +59,15 @@ class Auth
 				if(user != null) return done(null, user);
 
 				var d = Date.now();
-				var user = users.construct({
+				var newUser = users.construct({
 					authId: authId,
 					name: profile.displayName,
 					created: d,
 					role: 'customer'
 				});
-				user.save(function(err, _) {
+				newUser.save(function(err, _) {
 					if(err != null) return done(err, null);
-					done(null, user);
+					done(null, newUser);
 				});
 			});
 		}));

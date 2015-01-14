@@ -287,9 +287,9 @@ class Meadowlark
 
 		var user = new handlers.User();
 
-		app.get('/account', user.customerOnly, user.account);
-		app.get('/account/order-history', user.customerOnly, user.orderHistory);
-		app.get('/account/email-prefs', user.customerOnly, user.emailPrefs);
+		app.get('/user/account', user.customerOnly, user.account);
+		app.get('/user/account/order-history', user.customerOnly, user.orderHistory);
+		app.get('/user/account/email-prefs', user.customerOnly, user.emailPrefs);
 
 		app.get('/sales', user.employeeOnly, user.sales);
 
