@@ -3,7 +3,6 @@ package js.npm.connect;
 import js.node.http.ClientRequest;
 import js.npm.express.Request;
 import js.npm.express.Response;
-import js.npm.express.Middleware.IMiddleware;
 
 extern class VHostHost implements ArrayAccess<String>
 {
@@ -14,7 +13,7 @@ extern class VHostHost implements ArrayAccess<String>
 
 extern class VHost
 implements npm.Package.Require<"vhost", "~3.0.0">
-implements IMiddleware<Request, Response>
+implements Middleware.IMiddleware<Request, Response>
 {
 	@:overload(function(hostname : EReg, app : Dynamic) : Void {})
 	public function new(hostname : String, app : Dynamic) : Void;
