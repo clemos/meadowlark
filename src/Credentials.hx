@@ -17,4 +17,13 @@ class Credentials
 			connectionString: 'mongodb://localhost/meadowlark'
 		},		
 	}
+
+	public static var authProviders = {
+		facebook: {
+			development: {
+				appId: 'https://developers.facebook.com/apps/',
+				appSecret: 'https://developers.facebook.com/apps/'
+			}
+		}
+	}
 }

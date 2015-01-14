@@ -1,3 +1,5 @@
+#-D cluster
+#-D ssl
 -lib js-kit
 -lib HaxeContracts
 -cp js-kit

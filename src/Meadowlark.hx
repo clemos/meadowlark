@@ -28,6 +28,7 @@ import js.npm.express.Response;
 import js.npm.express.Static;
 import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
+import lib.Auth;
 import lib.Bundles;
 
 class Meadowlark
@@ -156,6 +157,14 @@ class Meadowlark
 			resave: false,
 			saveUninitialized: false
 		}));
+
+		///// Authentication /////
+
+		var auth = new Auth(app, {
+			providers: Credentials.authProviders,
+			successRedirect: '/account',
+			failureRedirect: '/unauthorized'
+		});
 
 		///// Tests /////
 
