@@ -1,7 +1,7 @@
 package js.npm.express;
 
 extern class ErrorHandler
-implements npm.Package.Require<"errorhandler", "^1.3.2">
+implements npm.Package.Require<"errorhandler", "^1.3.2"> #if !haxe3,#end
 implements Middleware.IMiddleware<Request, Response>
 {
 	@:overload(function(?options : Bool) : Void {})

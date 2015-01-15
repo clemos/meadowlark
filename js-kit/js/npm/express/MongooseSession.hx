@@ -5,7 +5,7 @@ import js.npm.express.Session.SessionStore;
 import js.npm.mongoose.Mongoose;
 
 extern class MongooseSession
-implements npm.Package.Require<"mongoose-session", "*">
+implements npm.Package.Require<"mongoose-session", "*"> #if !haxe3,#end
 implements SessionStore
 {
 	public function new(mongoose : Mongoose, ?options : {

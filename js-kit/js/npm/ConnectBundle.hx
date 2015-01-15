@@ -11,7 +11,7 @@ typedef ConnectBundleBundle = {
 }
 
 extern class ConnectBundle
-implements npm.Package.Require<"connect-bundle", "^0.0.5">
+implements npm.Package.Require<"connect-bundle", "^0.0.5"> #if !haxe3,#end
 implements IMiddleware<Request, Response>
 {
 	public function new(options : {}) : Void;

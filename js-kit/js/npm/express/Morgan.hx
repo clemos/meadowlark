@@ -17,7 +17,7 @@ typedef MorganOptions = {
 }
 
 extern class Morgan
-implements npm.Package.Require<"morgan", "^1.5.1">
+implements npm.Package.Require<"morgan", "^1.5.1"> #if !haxe3,#end
 implements Middleware.IMiddleware<Request, Response>
 {
 	public function new(format : MorganFormat, ?options : MorganOptions) : Void;
