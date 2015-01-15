@@ -26,6 +26,7 @@ import js.npm.express.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Static;
+import js.npm.formidable.IncomingForm;
 import js.npm.NodeEnvFile;
 import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
@@ -241,6 +242,18 @@ class Meadowlark
 
 		/// After Rest API, use csurf ///
 
+		var form : IncomingForm<Request> = new IncomingForm();
+
+		app.use(function(req : Request, res : Response, next) {
+			var contentType : String = Reflect.field(untyped req.headers, 'content-type');
+			if(contentType != null && contentType.indexOf('multipart/form-data') >= 0) {
+				IncomingFormHelper.parse(req, function(err, fields, files) {
+					if(fields._csrf) untyped req.body._csrf = fields._csrf;
+					next();
+				});
+			}
+			else next();
+		});
 		app.use(new Csurf());
 		app.use(function(req : Request, res : Response, next) {
 			res.locals._csrfToken = Csurf.csrfToken(req);

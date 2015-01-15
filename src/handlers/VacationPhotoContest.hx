@@ -8,7 +8,7 @@ import js.npm.express.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Session;
-import js.npm.Formidable.IncomingForm;
+import js.npm.formidable.IncomingForm;
 import js.npm.mongoose.Mongoose;
 
 class VacationPhotoContest
@@ -29,7 +29,7 @@ class VacationPhotoContest
 	}
 
 	public function vacationPhotoSumbission(req : Request, res : Response) {
-		IncomingForm().parse(req, function(err, fields, photos) {
+		IncomingFormHelper.parse(req, function(err, fields, photos) {
 			var session = Session.session(req);
 			var photo = photos.photo;
 
@@ -49,12 +49,12 @@ class VacationPhotoContest
 			Fs.mkdirSync(dir);
 
 			// /tmp uses a different partition and filesystem.
-			// need to copy and unlink: http://stackoverflow.com/a/4571377/70894
-			var is = Fs.createReadStream(photo.path);
-			var os = Fs.createWriteStream(path);
+			// need to stream-copy and unlink: http://stackoverflow.com/a/4571377/70894
+			var input = Fs.createReadStream(photo.path);
+			var output = Fs.createWriteStream(path);
 
-			is.pipe(os);
-			is.on('end', Fs.unlinkSync.bind(photo.path));
+			input.pipe(output);
+			input.on('end', Fs.unlinkSync.bind(photo.path));
 
 			saveContestEntry('vacation-photo', fields.email, req.params.year, req.params.month, path);
 
