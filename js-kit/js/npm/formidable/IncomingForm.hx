@@ -42,7 +42,7 @@ class IncomingFormHelper
 }
 
 extern class IncomingForm<Req : ClientRequest>
-implements npm.Package.RequireNamespace<"formidable", "~1.0.16">
+implements npm.Package.RequireNamespace<"formidable", "^1.0.16">
 {
 	public var encoding : String;
 	public var uploadDir : String;

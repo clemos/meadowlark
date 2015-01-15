@@ -20,7 +20,7 @@ typedef ConnectRestResult<T> = T -> Dynamic -> Void;
 typedef ConnectRestResult2<T> = T -> Dynamic -> ConnectRestCallback -> Void;
 
 extern class ConnectRest
-implements npm.Package.Require<"connect-rest", "~1.6.0">
+implements npm.Package.Require<"connect-rest", "^1.6.0">
 {
 	public static function rester(?options : {}) : Middleware<Request, Response>;
 

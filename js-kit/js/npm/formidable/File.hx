@@ -1,7 +1,7 @@
 package js.npm.formidable;
 
 extern class File
-implements npm.Package.RequireNamespace<"formidable", "~1.0.16">
+implements npm.Package.RequireNamespace<"formidable", "^1.0.16">
 {
 	public var size : Int;
 	public var path : String;

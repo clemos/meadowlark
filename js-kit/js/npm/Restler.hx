@@ -13,7 +13,7 @@ extern class RestlerResponse
 }
 
 extern class Restler
-implements npm.Package.Require<"restler", "~3.2.2">
+implements npm.Package.Require<"restler", "^3.2.2">
 {
 	public static function request(url : String, ?options : {}) : RestlerResponse;
 	public static function get(url : String, ?options : {}) : RestlerResponse;

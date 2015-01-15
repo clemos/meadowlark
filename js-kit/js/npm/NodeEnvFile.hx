@@ -6,7 +6,7 @@ typedef NodeEnvFileOptions = {
 }
 
 extern class NodeEnvFile
-implements npm.Package.Require<"node-env-file", "~0.1.4">
+implements npm.Package.Require<"node-env-file", "^0.1.4">
 {
 	public function new(filePath : String, ?options : NodeEnvFileOptions) : Void;
 }

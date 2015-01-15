@@ -15,7 +15,7 @@ typedef LoadTestResult = {
 }
 
 extern class LoadTest
-implements npm.Package.Require<"loadtest", "~1.2.4">
+implements npm.Package.Require<"loadtest", "^1.2.4">
 {
 	public static function loadTest(options : {}, ?callback : Dynamic -> LoadTestResult -> Void) : Void;
 	public static function startServer(options : {}) : Server;

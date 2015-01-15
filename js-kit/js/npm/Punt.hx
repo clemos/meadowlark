@@ -14,7 +14,7 @@ extern class PuntSender
 }
 
 extern class Punt
-implements npm.Package.Require<"punt", "~2.2.0">
+implements npm.Package.Require<"punt", "^2.2.0">
 {
 	public static function bind(address : String) : PuntListener;
 	public static function connect(address : String) : PuntSender;

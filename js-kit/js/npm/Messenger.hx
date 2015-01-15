@@ -26,7 +26,7 @@ extern class Speaker
 }
 
 extern class Messenger
-implements npm.Package.Require<"messenger", "~0.0.9">
+implements npm.Package.Require<"messenger", "^0.0.9">
 {
 	@:overload(function(createListener : String) : Listener {})	
 	public static function createListener(port : Int) : Listener;
