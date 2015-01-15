@@ -10,8 +10,8 @@ import js.node.Fs;
 import js.node.http.Server;
 import js.node.Process;
 import js.node.stdio.Console;
-import js.npm.connect.ConnectBundle;
-import js.npm.connect.ConnectRest;
+import js.npm.ConnectBundle;
+import js.npm.ConnectRest;
 import js.npm.Express;
 import js.npm.express.Csurf;
 import js.npm.ExpressHandlebars;
@@ -226,8 +226,8 @@ class Meadowlark
 			if(worker != null) worker.disconnect();
 		});
 
-		// If you want to use the api subdomain:
-		//app.use(new VHost('api.*', ConnectRest.rester(apiOptions)));
+		// If you want to use the api.meadowlark subdomain:
+		//app.use(new js.npm.express.VHost('api.*', ConnectRest.rester(apiOptions)));
 
 		app.use('/api', new Cors());
 		app.use(ConnectRest.rester(apiOptions));

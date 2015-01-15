@@ -1,8 +1,4 @@
-package js.npm.connect;
-
-import js.node.http.ClientRequest;
-import js.npm.express.Request;
-import js.npm.express.Response;
+package js.npm.express;
 
 extern class VHostHost implements ArrayAccess<String>
 {
@@ -18,7 +14,7 @@ implements Middleware.IMiddleware<Request, Response>
 	@:overload(function(hostname : EReg, app : Dynamic) : Void {})
 	public function new(hostname : String, app : Dynamic) : Void;
 
-	public inline static function vhost(req : ClientRequest) : VHostHost {
+	public inline static function vhost(req : Request) : VHostHost {
 		return untyped req.vhost;
 	}	
 }

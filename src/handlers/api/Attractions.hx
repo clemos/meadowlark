@@ -1,6 +1,6 @@
 package handlers.api;
 
-import js.npm.connect.ConnectRest.ConnectRestCallback;
+import js.npm.ConnectRest.ConnectRestCallback;
 import js.npm.express.BodyParser;
 import models.Attraction;
 import models.Attraction.AttractionManager;

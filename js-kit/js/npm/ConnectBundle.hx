@@ -1,4 +1,4 @@
-package js.npm.connect;
+package js.npm;
 
 import js.npm.express.Request;
 import js.npm.express.Response;
