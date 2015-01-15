@@ -32,6 +32,8 @@ import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
 import lib.Auth;
 import lib.Bundles;
+import lib.Twitter;
+import promhx.Promise;
 
 class Meadowlark
 {
@@ -107,9 +109,9 @@ class Meadowlark
 					}, 5000);
 
 					var worker = js.node.Cluster.cluster.worker;
-					if(worker != null) worker.disconnect();
 
-					server.close();
+					if(worker != null) worker.disconnect();
+					if(server != null) server.close();
 
 					try {
 						next(err);
@@ -209,6 +211,50 @@ class Meadowlark
 			next();
 		});
 
+		///// Twitter /////
+
+		var topTweets = {
+			count: 10,
+			lastRefreshed: 0.0,
+			refreshInterval: 15 * 60 * 1000,
+			tweets: []
+		};
+
+		#if twitter
+		app.use(function(req : Request, res : Response, next) {
+			if(Date.now().getTime() < topTweets.lastRefreshed + topTweets.refreshInterval) {
+				res.locals.tweets = topTweets.tweets;
+				next();
+				return;
+			}
+
+			var twitter = new Twitter();
+
+			twitter.search('#haxe', topTweets.count, function(result) {
+				var formattedTweets = [];
+				var promises = [];
+				var embedOpts = { omit_script: 1 };
+				var statuses : Iterable<Dynamic> = untyped result.statuses;
+				for(status in statuses) {
+					var def = new promhx.Deferred();
+					promises.push(def.promise());
+					twitter.embed(status.id_str, embedOpts, function(embed) {
+						if(embed != null) formattedTweets.push(embed.html);
+						def.resolve(true);
+					});
+				}
+
+				Promise.whenAll(promises).then(function(_) {
+					topTweets.lastRefreshed = Date.now().getTime();
+					topTweets.tweets = formattedTweets;
+
+					res.locals.tweets = topTweets.tweets;
+					next();
+				});
+			});
+		});
+		#end
+
 		///// Rest API routes /////
 
 		var apiOptions = {
@@ -222,7 +268,7 @@ class Meadowlark
 				logger.log('Server shutting down after API domain error.');
 				Node.process.exit(1);
 			}, 5000);
-			server.close();
+			if(server != null) server.close();
 			var worker = Cluster.cluster.worker;
 			if(worker != null) worker.disconnect();
 		});

@@ -2,7 +2,7 @@
 
 Following along the project in [Web Development with Node and Express](http://shop.oreilly.com/product/0636920032977.do), but using Haxe as language instead of javascript. A work in progress that will evolve using Haxe solutions instead of Node packages. For example, it's using [Buddy](https://github.com/ciscoheat/buddy) for testing instead of mocha and chai.
 
-**Current progress:** Middle of Chapter 18.
+**Current progress:** Middle of Chapter 19.
 
 ### Todo 
 
@@ -24,6 +24,8 @@ If you're using Vagrant on Windows you may get problems with symlinks when insta
 
 Compile with `haxe meadowlark.hxml`, then go to the `www` directory and run with `node meadowlark.js` or `forever -w meadowlark.js`. Then browse to `http://localhost:3000` and it *should* work.
 
+Take a look in `meadowlark.hxml` for some compiler defines that may be interesting to toggle.
+
 ## Authentication
 
 No login data for authentication are saved in the project for security reasons, so to use your Gmail and Facebook information, create `www/.env` with the following content:
@@ -33,9 +35,11 @@ FB_APPID=
 FB_APPSECRET=
 GMAIL_USER=
 GMAIL_PASSWORD=
+TWITTER_CONSUMERKEY=
+TWITTER_CONSUMERSECRET=
 ```
 
-Fill in the blanks, and they will be imported to process.env with the help of [node-env-file](https://www.npmjs.com/package/node-env-file).
+Fill in the blanks, and they will be imported with the help of [node-env-file](https://www.npmjs.com/package/node-env-file).
 
 ## Tests
 

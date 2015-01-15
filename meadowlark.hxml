@@ -1,7 +1,13 @@
+# Start one process for each CPU for extra power:
 #-D cluster
+# Use SSL on port 3001:
 #-D ssl
+# Enable twitter on start page (a bit slow):
+#-D twitter
 -lib js-kit
 -lib HaxeContracts
+-lib promhx
+-D nodejs
 -cp js-kit
 -cp src
 -js www/meadowlark.js

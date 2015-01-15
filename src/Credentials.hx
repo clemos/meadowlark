@@ -2,6 +2,10 @@ package ;
 
 import js.Node;
 
+/**
+ * Use www/.env to set the environment variables in this file.
+ * Using https://www.npmjs.com/package/node-env-file
+ */
 class Credentials
 {
 	public static var instance(default, null) : Credentials;
@@ -16,6 +20,7 @@ class Credentials
 	public var gmail : Dynamic;
 	public var mongo : Dynamic;
 	public var authProviders : Dynamic;
+	public var twitter : Dynamic;
 
 	private function new(env) {
 		this.env = env;
@@ -44,5 +49,10 @@ class Credentials
 				}
 			}
 		}
+
+		this.twitter = {
+			consumerKey: env.TWITTER_CONSUMERKEY, 
+			consumerSecret: env.TWITTER_CONSUMERSECRET
+		};
 	}
 }
