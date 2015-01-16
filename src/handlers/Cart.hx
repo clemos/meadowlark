@@ -2,12 +2,13 @@ package handlers;
 
 import js.Error;
 import js.Node;
-import js.npm.connect.support.Middleware;
+import js.npm.express.Middleware;
 import js.npm.express.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Session;
 import js.npm.mongoose.Mongoose;
+import models.Vacation;
 
 class Cart
 {
@@ -19,6 +20,34 @@ class Cart
 	public function new(mailer) {
 		this.mailer = mailer;
 		this.console = Node.console;
+	}
+
+	public function add(req : Request, res : Response, next : MiddlewareNext) {
+		var session = Session.session(req);
+		var cart = session.cart;
+
+		if(cart == null) cart = session.cart = {};
+		if(cart.items == null) cart.items = new Array<{sku: String, name: String}>();
+
+		Vacation.build().findOne({sku: req.query.sku}, function(err, vacation) {
+			if(err != null) {
+				Logger.instance.error(err);
+				session.flash = {
+					type: 'danger',
+					intro: 'Ooops!',
+					message: "Couldn't add your dream vacation to the cart. Sorry!",
+				};
+				return res.redirect(303, '/vacations');
+			}
+			cart.items.push({sku: vacation.sku, name: vacation.name});
+			session.flash = {
+				type: 'success',
+				intro: 'Vacation added!',
+				message: '"${vacation.name}" has been added to the cart.',
+			};
+
+			return res.redirect(303, '/vacations');
+		});
 	}
 
 	public function checkout(req : Request, res : Response, next : MiddlewareNext) {

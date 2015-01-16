@@ -320,6 +320,7 @@ class Meadowlark
 
 		var cart = new Cart(mailer);
 
+		app.get('/cart/add', cart.add);
 		app.post('/cart/checkout', cart.checkout);			
 
 		var newsletter = new Newsletter();
