@@ -259,19 +259,19 @@ class Meadowlark
 
 		var apiOptions = {
 			context: '/api',
-			domain: Domain.create()
+			domain: {
+				closeWorker: function(err, req, res) {
+					logger.error(err);
+					Timer.delay(function() {
+						logger.log('Server shutting down after API domain error.');
+						Node.process.exit(1);
+					}, 5000);
+					if(server != null) server.close();
+					var worker = Cluster.cluster.worker;
+					if(worker != null) worker.disconnect();
+				}
+			}
 		};
-
-		apiOptions.domain.on('error', function(err) {
-			logger.error(err);
-			Timer.delay(function() {
-				logger.log('Server shutting down after API domain error.');
-				Node.process.exit(1);
-			}, 5000);
-			if(server != null) server.close();
-			var worker = Cluster.cluster.worker;
-			if(worker != null) worker.disconnect();
-		});
 
 		// If you want to use the api.meadowlark subdomain:
 		//app.use(new js.npm.express.VHost('api.*', ConnectRest.rester(apiOptions)));
