@@ -2,6 +2,7 @@ package;
 
 import handlers.*;
 import handlers.api.*;
+import js.npm.connectmongo.MongoStore;
 import haxe.Timer;
 import js.Node;
 import js.node.Cluster;
@@ -19,7 +20,7 @@ import js.npm.express.Compression;
 import js.npm.express.CookieParser;
 import js.npm.express.Cors;
 import js.npm.express.ErrorHandler;
-import js.npm.express.MongooseSession;
+import js.npm.ConnectMongo;
 import js.npm.express.Morgan;
 import js.npm.express.Session;
 import js.npm.express.BodyParser;
@@ -162,7 +163,7 @@ class Meadowlark
 
 		app.use(new Session({
 			secret: Credentials.instance.cookieSecret,
-			store: new MongooseSession(Database.instance),
+			store: MongoStore.create({mongooseConnection: Database.instance.connection}),
 			resave: false,
 			saveUninitialized: false
 		}));
