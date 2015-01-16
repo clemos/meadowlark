@@ -40,6 +40,8 @@
     "grunt-haxe": "^0.1.12",
     "grunt-link-checker": "0.0.6",
     "grunt-lint-pattern": "^0.1.4",
+    "grunt-wait": "^0.1.0",
+    "grunt-wait-server": "^0.1.2",
     "load-grunt-tasks": "^2.0.0",
     "loadtest": "^1.2.4",
     "morgan": "^1.5.1",

@@ -1,3 +1,4 @@
+# Useful in combination with 'forever -w meadowlark.js'
 module.exports = (g) -> 
 	require(plugin) g for plugin in ['time-grunt', 'load-grunt-tasks']
 	task = g.registerTask
@@ -7,8 +8,14 @@ module.exports = (g) ->
 
 	g.initConfig
 		haxe:
-			development:
-				hxml: 'meadowlark-all.hxml'
+			main:
+				hxml: 'meadowlark.hxml'
+			client:
+				hxml: 'meadowlark-client.hxml'
+			tests:
+				hxml: 'meadowlark-tests.hxml'
+			clientTests:
+				hxml: 'meadowlark-client-tests.hxml'
 
 		"link-checker":
 			development:
@@ -87,6 +94,17 @@ module.exports = (g) ->
 				files:
 					src: [ 'less/**/*.less' ]
 
-	task 'default', ['haxe', 'static', 'tests']
+		wait:
+			hashres:
+				options:
+					delay: 6000
+
+		waitServer:
+			development:
+				options:
+					url: 'http://localhost:3000'
+
+
+	task 'default', ['haxe', 'static', 'wait:hashres', 'waitServer', 'tests']
 	task 'static', ['lint_pattern', 'less', 'cssmin', 'uglify', 'hashres']
 	task 'tests',   ['exec', 'link-checker']
