@@ -30,7 +30,7 @@ class Notifications
 			{email: form.email},
 			{"$push": { skus: form.sku }},
 			{upsert: true},
-			function(err, listeners) {
+			function(err, affected, raw) {
 				if(err != null) {
 					logger.error(err);
 					session.flash = {
