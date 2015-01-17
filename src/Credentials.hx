@@ -21,11 +21,16 @@ class Credentials
 	public var mongo : Dynamic;
 	public var authProviders : Dynamic;
 	public var twitter : Dynamic;
+	public var wunderground : Dynamic;
 
 	private function new(env) {
 		this.env = env;
 
 		this.cookieSecret = "your cookie secret goes here";
+
+		this.wunderground = {
+			apiKey: env.WUNDERGROUND_APIKEY
+		}
 
 		this.google = {
 			gmail: {

@@ -1,3 +1,6 @@
+# Some options requires authentication,
+# see README.md for more information.
+
 # Start one process for each CPU for extra power:
 #-D cluster
 # Use SSL on port 3001:
@@ -6,6 +9,8 @@
 #-D twitter
 # Use geocoding (makes http requests + cache file):
 #-D geocoding
+# Use Weather Underground for weather data (if not, it will be static)
+#-D weather
 -lib js-kit
 -lib HaxeContracts
 -lib promhx

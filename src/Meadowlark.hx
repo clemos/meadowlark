@@ -42,6 +42,14 @@ import promhx.Promise;
 
 using Lambda;
 
+private typedef WeatherLocation = {
+	name : String,
+	?forecastUrl : String,
+	?iconUrl : String,
+	?weather : String,
+	?temp : String
+}
+
 class Meadowlark
 {
 	var server : Server;
@@ -191,11 +199,47 @@ class Meadowlark
 			next();
 		});
 
-		///// View Partials /////
+		///// View Partials and Weather /////
+
+		var weatherCache = {
+			refreshed: 0.0,
+			refreshing: false,
+			updateFrequency: 360000, // 1 hour
+			locations: [
+				{
+					name: 'Portland',
+					forecastUrl: 'http://www.wunderground.com/US/OR/Portland.html',
+					iconUrl: 'http://icons-ak.wxug.com/i/c/k/cloudy.gif',
+					weather: 'Overcast',
+					temp: '54.1 F (12.3 C)'
+				},
+				{
+					name: 'Bend',
+					forecastUrl: 'http://www.wunderground.com/US/OR/Bend.html',
+					iconUrl: 'http://icons-ak.wxug.com/i/c/k/partlycloudy.gif',
+					weather: 'Partly Cloudy',
+					temp: '55.0 F (12.8 C)'
+				},
+				{
+					name: 'Manzanita',
+					forecastUrl: 'http://www.wunderground.com/US/OR/Manzanita.html',
+					iconUrl: 'http://icons-ak.wxug.com/i/c/k/rain.gif',
+					weather: 'Light Rain',
+					temp: '55.0 F (12.8 C)'
+				}
+			]
+		};
+
+		#if weather
+		refreshWeatherData(weatherCache);
+		#end
 
 		app.use(function(req : Request, res : Response, next) {
+			#if weather
+			refreshWeatherData(weatherCache);
+			#end
 			if(!res.locals.partials) res.locals.partials = {};
-			res.locals.partials.weather = getWeatherData();
+			res.locals.partials.weather = {locations: weatherCache.locations};
 			next();
 		});
 
@@ -512,31 +556,38 @@ class Meadowlark
 		#end
 	}
 
-	private static function getWeatherData() {
-		return {
-			locations: [
-				{
-					name: 'Portland',
-					forecastUrl: 'http://www.wunderground.com/US/OR/Portland.html',
-					iconUrl: 'http://icons-ak.wxug.com/i/c/k/cloudy.gif',
-					weather: 'Overcast',
-					temp: '54.1 F (12.3 C)'
-				},
-				{
-					name: 'Bend',
-					forecastUrl: 'http://www.wunderground.com/US/OR/Bend.html',
-					iconUrl: 'http://icons-ak.wxug.com/i/c/k/partlycloudy.gif',
-					weather: 'Partly Cloudy',
-					temp: '55.0 F (12.8 C)'
-				},
-				{
-					name: 'Manzanita',
-					forecastUrl: 'http://www.wunderground.com/US/OR/Manzanita.html',
-					iconUrl: 'http://icons-ak.wxug.com/i/c/k/rain.gif',
-					weather: 'Light Rain',
-					temp: '55.0 F (12.8 C)'
-				},
-			],
-		};
+	#if weather
+	private function refreshWeatherData(c) {
+		if(!c.refreshing && Date.now().getTime() > 0.0 + c.refreshed + c.updateFrequency) {
+			logger.log('Refreshing weather data cache');
+			c.refreshing = true;
+			var promises = [];
+			var locations : Array<WeatherLocation> = c.locations;
+			for(loc in locations) {
+				logger.log('Refreshing weather for ' + loc.name);
+				var def = new Deferred<WeatherLocation>();
+				var options = {
+					hostname: 'api.wunderground.com',
+					path: '/api/' + Credentials.instance.wunderground.apiKey + '/conditions/q/OR/' + loc.name + '.json'
+				};
+
+				lib.Request.httpJson(options, function(err, body) {
+					loc.forecastUrl = body.current_observation.forecast_url;
+					loc.iconUrl = body.current_observation.icon_url;
+					loc.weather = body.current_observation.weather;
+					loc.temp = body.current_observation.temperature_string;
+					def.resolve(loc);
+				});
+
+				promises.push(def.promise());
+			}
+
+			Promise.whenAll(promises).then(function(_) {
+				logger.log('Weather data refreshed.');
+				c.refreshing = false;
+				c.refreshed = Date.now().getTime();
+			});
+		}
 	}
+	#end
 }

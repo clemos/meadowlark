@@ -2,7 +2,7 @@
 
 Following along the project in [Web Development with Node and Express](http://shop.oreilly.com/product/0636920032977.do), but using Haxe as language instead of javascript. A work in progress that will evolve using Haxe solutions instead of Node packages. For example, it's using [Buddy](https://github.com/ciscoheat/buddy) for testing instead of mocha and chai.
 
-**Current progress:** Middle of Chapter 19.
+**Current progress:** Beginning of Chapter 20.
 
 ### Todo 
 
@@ -38,6 +38,7 @@ GMAIL_PASSWORD=
 TWITTER_CONSUMERKEY=
 TWITTER_CONSUMERSECRET=
 GOOGLE_MAPS_APIKEY=
+WUNDERGROUND_APIKEY=
 ```
 
 Fill in the blanks, and they will be imported with the help of [node-env-file](https://www.npmjs.com/package/node-env-file).
