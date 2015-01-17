@@ -2,6 +2,7 @@ package ;
 
 import js.Node;
 import js.npm.Express;
+import models.Dealer;
 import models.Vacation;
 
 class Database
@@ -32,12 +33,27 @@ class Database
 	}
 
 	public static function seed() {
-		var vacation = Vacation.build();
+		var dealer = Dealer.build();
+		dealer.find(function(err, dealers) {
+			if(dealers.length > 0) return;
 
+			Logger.instance.log("Seeding DB: Dealers");
+
+			dealer.construct({
+				name: 'The Honest Car Man',
+				address1: '1909 Waterfall Way',
+				city: 'Wylie',
+				state: 'TX',
+				zip: '75098',
+				active: true
+			}).save();
+		});
+
+		var vacation = Vacation.build();
 		vacation.find(function(err, vacations) {
 			if(vacations.length > 0) return;
 
-			Logger.instance.log("Seeding database...");
+			Logger.instance.log("Seeding DB: Vacations");
 
 			vacation.construct({
 				name: 'Hood River Day Trip',
@@ -83,8 +99,6 @@ class Database
 				packagesSold: 0,
 				notes: 'The tour guide is currently recovering from a skiing accident.'
 			}).save();
-
-			Logger.instance.log("Seeding completed.");
 		});
 	}		
 }

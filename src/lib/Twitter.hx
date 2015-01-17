@@ -1,6 +1,7 @@
 package lib;
 
 import haxe.Json;
+import js.Error;
 import js.node.Https;
 import js.node.Querystring;
 
@@ -18,6 +19,11 @@ class Twitter
 		this.options = options;
 	}
 
+	private function result(cb, err, data) {
+		if(err != null) throw new Error("Twitter request failed.");
+		else cb(data);
+	}
+
 	public function search(query, count, cb) {
 		getAccessToken(function(token) {
 			if(token == null) cb(null);
@@ -33,7 +39,7 @@ class Twitter
 				}
 			};
 
-			makeRequest(options, cb);
+			Request.httpsJson(options, result.bind(cb));
 		});
 	}
 
@@ -54,7 +60,7 @@ class Twitter
 				}
 			};
 
-			makeRequest(requestOptions, cb);
+			Request.httpsJson(requestOptions, result.bind(cb));
 		});
 	}
 
@@ -79,22 +85,13 @@ class Twitter
 			}
 		};
 
-		makeRequest(options, function(auth) {
-			if(auth.token_type != 'bearer') {
-				cb(null);
+		Request.httpsJson(options, function(err, auth) {
+			if(err != null || auth.token_type != 'bearer') {
+				throw new Error("Twitter request failed.");
 			} else {
 				accessToken(auth.access_token);
 				cb(accessToken());
 			}
 		});
-	}
-
-	function makeRequest(options, cb : Dynamic -> Void) {
-		var req = Https.request(options, function(res) {
-			var data = '';
-			res.on('data', function(chunk) data += chunk);
-			res.on('end', function() cb(Json.parse(data)));
-		});
-		req.end();
 	}
 }

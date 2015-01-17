@@ -2,6 +2,7 @@ package;
 
 import handlers.*;
 import handlers.api.*;
+import haxe.Json;
 import js.npm.connectmongo.MongoStore;
 import haxe.Timer;
 import js.Node;
@@ -33,8 +34,13 @@ import js.npm.Nodemailer;
 import js.npm.nodemailer.Transporter;
 import lib.Auth;
 import lib.Bundles;
+import lib.GeoCode;
 import lib.Twitter;
+import models.Dealer;
+import promhx.Deferred;
 import promhx.Promise;
+
+using Lambda;
 
 class Meadowlark
 {
@@ -92,8 +98,8 @@ class Meadowlark
 		mailer = Nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
-				user: Credentials.instance.gmail.user,
-				pass: Credentials.instance.gmail.password
+				user: Credentials.instance.google.gmail.user,
+				pass: Credentials.instance.google.gmail.password
 			}
 		});
 
@@ -214,6 +220,7 @@ class Meadowlark
 
 		///// Twitter /////
 
+		#if twitter
 		var topTweets = {
 			count: 10,
 			lastRefreshed: 0.0,
@@ -221,7 +228,6 @@ class Meadowlark
 			tweets: []
 		};
 
-		#if twitter
 		app.use(function(req : Request, res : Response, next) {
 			if(Date.now().getTime() < topTweets.lastRefreshed + topTweets.refreshInterval) {
 				res.locals.tweets = topTweets.tweets;
@@ -254,6 +260,92 @@ class Meadowlark
 				});
 			});
 		});
+		#end
+
+		///// Geocoding /////
+
+		#if geocoding
+		var dealerCache = {
+			lastRefreshed: 0.0,
+			refreshInterval: 60 * 60 * 1000,
+			jsonUrl: '/dealers.json',
+			geocodeLimit: 2000,
+			geocodeCount: 0.0,
+			geocodeBegin: 0.0,
+			jsonFile: '',
+			refresh: null
+		};
+
+		var geocodeDealer = function(dealer : Dealer) : Promise<Dealer> {
+			var def = new Deferred();
+			var addr = dealer.getAddress(' ');
+
+			if(addr == dealer.geocodedAddress) {
+				def.resolve(dealer);       // already geocoded
+				return def.promise();
+			}
+			else if(dealerCache.geocodeCount >= dealerCache.geocodeLimit) {
+				// has 24 hours passed since we last started geocoding?
+				if(Date.now().getTime() > dealerCache.geocodeCount + 24 * 60 * 60 * 1000) {
+					dealerCache.geocodeBegin = Date.now().getTime();
+					dealerCache.geocodeCount = 0;
+				} else {
+					// we can't geocode this now: we've reached our usage limit
+					def.resolve(dealer);
+					return def.promise();
+				}
+			}
+
+			GeoCode.find(addr, function(err, coords) {
+				dealerCache.geocodeCount++;
+				if(err != null) {
+					logger.error('Geocoding failure for $addr');
+					def.resolve(dealer);
+				} else {
+					logger.log('Added geocoding coordinates for $addr:' + Std.string(coords));
+					dealer.lat = coords.lat;
+					dealer.lng = coords.lng;
+					dealer.geocodedAddress = addr;
+					dealer.save(function(err, d) def.resolve(dealer));
+				}
+			});
+
+			return def.promise();
+		};
+
+		dealerCache.jsonFile = Node.__dirname + '/public' + dealerCache.jsonUrl;
+
+		dealerCache.refresh = function(cb) {
+			if(Date.now().getTime() > dealerCache.lastRefreshed + dealerCache.refreshInterval) {
+				// we need to refresh the cache
+				Dealer.build().find({ active: true }, function(err, dealers : Array<Dealer>) {
+					if(err != null) {
+						logger.error('Error fetching dealers: '+ err);
+						cb();
+						return;
+					}
+
+					Promise.whenAll(dealers.map(geocodeDealer)).then(function(dealers) {
+						// we now write all the dealers out to our cached JSON file
+						Fs.writeFileSync(dealerCache.jsonFile, Json.stringify(dealers));
+						logger.log('Updated dealers cache file: ' + dealerCache.jsonFile);
+						// all done -- invoke callback
+						cb();
+					});
+				});
+			}
+		};
+
+		var refreshDealerCacheForever = null;
+		refreshDealerCacheForever = function() {
+			dealerCache.refresh(function() {
+				Timer.delay(refreshDealerCacheForever, dealerCache.refreshInterval);
+			});
+		};
+
+		// Start the caching
+		if(!Fs.existsSync(dealerCache.jsonFile)) Fs.writeFileSync(dealerCache.jsonFile, Json.stringify([]));
+		refreshDealerCacheForever();
 		#end
 
 		///// Rest API routes /////

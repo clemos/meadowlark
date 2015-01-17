@@ -37,6 +37,7 @@ GMAIL_USER=
 GMAIL_PASSWORD=
 TWITTER_CONSUMERKEY=
 TWITTER_CONSUMERSECRET=
+GOOGLE_MAPS_APIKEY=
 ```
 
 Fill in the blanks, and they will be imported with the help of [node-env-file](https://www.npmjs.com/package/node-env-file).

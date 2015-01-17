@@ -17,7 +17,7 @@ class Credentials
 	var env : Dynamic;
 
 	public var cookieSecret : String;
-	public var gmail : Dynamic;
+	public var google : Dynamic;
 	public var mongo : Dynamic;
 	public var authProviders : Dynamic;
 	public var twitter : Dynamic;
@@ -27,9 +27,14 @@ class Credentials
 
 		this.cookieSecret = "your cookie secret goes here";
 
-		this.gmail = {
-			user: env.GMAIL_USER, 
-			password: env.GMAIL_PASSWORD
+		this.google = {
+			gmail: {
+				user: env.GMAIL_USER, 
+				password: env.GMAIL_PASSWORD
+			},
+			maps: {
+				apiKey: env.GOOGLE_MAPS_APIKEY
+			}
 		};
 
 		this.mongo = {

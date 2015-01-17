@@ -3,3 +3,5 @@
 /.vagrant
 /www/meadowlark.js
 /www/.env
+/doc
+/www/public/dealers.json
