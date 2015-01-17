@@ -5,7 +5,7 @@
 # Enable twitter on start page (a bit slow to initialize):
 #-D twitter
 # Use geocoding (makes http requests + cache file):
--D geocoding
+#-D geocoding
 -lib js-kit
 -lib HaxeContracts
 -lib promhx
