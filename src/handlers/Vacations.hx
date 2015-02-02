@@ -17,7 +17,7 @@ class Vacations
 	public function setCurrency(req : Request, res : Response) {
 		var session = Session.session(req);
 		session.currency = req.params.currency;
-		return res.redirect(303, '/vacations');
+		res.redirect(303, '/vacations');
 	}
 
 	public function vacations(req : Request, res : Response) {
