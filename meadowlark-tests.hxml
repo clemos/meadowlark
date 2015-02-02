@@ -3,6 +3,5 @@
 # Required for buddy:
 -D nodejs 
 -cp qa
--cp js-kit
 -js www/qa/tests-crosspage.js
 -main tests.CrossPage
