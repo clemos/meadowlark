@@ -3,7 +3,6 @@ package;
 import handlers.*;
 import handlers.api.*;
 import haxe.Json;
-import js.npm.connectmongo.MongoStore;
 import haxe.Timer;
 import js.Node;
 import js.node.Cluster;
@@ -177,7 +176,7 @@ class Meadowlark
 
 		app.use(new Session({
 			secret: Credentials.instance.cookieSecret,
-			store: MongoStore.create({mongooseConnection: Database.instance.connection}),
+			store: ConnectMongo.construct(Session, {mongooseConnection: Database.instance.connection}),
 			resave: false,
 			saveUninitialized: false
 		}));
