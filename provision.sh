@@ -34,7 +34,8 @@ apt-get install nodejs -y
 # npm config set spin=false
 
 echo "=== Installing Haxe libraries..."
-haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master
+# haxelib git js-kit https://github.com/clemos/haxe-js-kit.git master
+haxelib git js-kit https://github.com/ciscoheat/haxe-js-kit.git dev
 haxelib install jQueryExtern
 haxelib install buddy
 haxelib install HaxeContracts

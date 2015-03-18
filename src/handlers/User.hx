@@ -1,6 +1,6 @@
 package handlers;
 
-import js.npm.connect.support.Middleware.MiddlewareNext;
+import js.npm.express.Middleware.MiddlewareNext;
 import js.npm.express.Request;
 import js.npm.express.Response;
 import js.npm.express.Session;
