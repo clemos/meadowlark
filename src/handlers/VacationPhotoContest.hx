@@ -3,7 +3,6 @@ package handlers;
 import js.Error;
 import js.Node;
 import js.node.Fs;
-import js.npm.connect.support.Middleware;
 import js.npm.express.BodyParser;
 import js.npm.express.Request;
 import js.npm.express.Response;
